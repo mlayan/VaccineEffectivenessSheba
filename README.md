@@ -54,4 +54,5 @@ Note that the analysis can also be performed without using R, by simply passing 
 
 ### Visualizing the results
 
-The script visualize.R allows one to load the results of the MCMC run and to visualize the estimations. This scripts depends on two R libraries: 1) tidyverse; and 2) cowplot. 
+The scripts 1.output_analysis.R, 3.model_adequacy.R and 4..R allows one to visualize the estimations. 
+This scripts depends on two R libraries: 1) tidyverse; and 2) gridExtra. 
