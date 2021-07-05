@@ -6,7 +6,7 @@
 
 
 // Constant parameters
-// extern double maxPCRDetectability;
+extern double maxPCRDetectability;
 extern double mIncub;
 extern double varIncub;
 extern double mGamma;
@@ -68,17 +68,17 @@ public:
 	void addIndividual(int indid, double onsetTime, int isCase, int vaccinationStatus, int age, int studyPeriod, int identifiedIndex, int isolation);
 	void setInfTime(int index, double infTime);
 	void newHousehold();
-	void initialInfTime(int index, double maxPCRDetectability, std::mt19937_64& gen);
+	void initialInfTime(int index, std::mt19937_64& gen);
 	void displayHH(); 
-	void compute_lambdas(int display = 0);
-	void update_lambdas(int ind, int display = 0);
+	void compute_lambdas();
+	void update_lambdas(int ind);
 
-	double newInfTime(int index, double maxPCRDetectability, std::mt19937_64& gen);
-	double pIncub(int index, double infTime, double maxPCRDetectability);
+	double newInfTime(int index, std::mt19937_64& gen);
+	double pIncub(int index, double infTime);
 
-	double compute_log_lik(std::vector<double> parameters, std::vector<int> selectedParam, double maxPCRDetectability, double mainHHSize, int display = 0);
-	double pInf(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
-	double S(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
+	double compute_log_lik(std::vector<double> parameters, std::vector<int> selectedParam, double mainHHSize);
+	double pInf(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize);
+	double S(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize);
 
 private:
 	int m_size;
