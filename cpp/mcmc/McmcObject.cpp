@@ -53,7 +53,6 @@ McmcObject::McmcObject() {
     m_mainHHSize = 2.0;
     m_sdLNormInfPrior = 1.0;
     m_sdLNormSPrior = 1.0;
-    m_maxPCRDetectability = 10.0;
 }
 
 McmcObject::McmcObject(
@@ -66,15 +65,14 @@ McmcObject::McmcObject(
                        int nIterTimeInfection, 
                        double mainHHSize, 
                        double sdLNormInfPrior,
-                       double sdLNormSPrior,
-                       double maxPCRDetectability
+                       double sdLNormSPrior
                        ) {
     // Default values
     m_globalLogLik= 0.0;
     m_numberOfMoveAccepted.resize(0);
     m_numberOfMoveProposed.resize(0);
     m_acceptedMoveData = 0;
-	m_proposedMoveData = 0;
+    m_proposedMoveData = 0;
 
     // Copy input vectors
     m_gen.seed(seed);
@@ -85,7 +83,6 @@ McmcObject::McmcObject(
     m_rateForRandomWalk = rateForRandomWalk;
     m_sdLNormInfPrior = sdLNormInfPrior;
     m_sdLNormSPrior = sdLNormSPrior;
-    m_maxPCRDetectability = maxPCRDetectability;
     m_parameter = parameter;
     m_selectedParam = selectedParameter;
     m_data = data;
@@ -153,20 +150,20 @@ void McmcObject::update_parameter(int parID) {
     double logRatioPrior = 0.0;
     switch (parID) {
     	case 0: // alpha - instantaneous risk of infection in the community - Uniform(0,1)
-    		if (newValue > 1) logRatioPrior = log(0); 
-    		break;
+	    if (newValue > 1) logRatioPrior = log(0); 
+    	    break;
 
         case 1: // beta - Instantaneous person-to-person transmission risk - Uniform(0,5)
-        	if (newValue > 5) logRatioPrior = log(0); 
-        	break;
+            if (newValue > 5) logRatioPrior = log(0); 
+            break;
 
         case 2: // delta - power coefficient of the frequency-dependent transmission model - Uniform(-3,3)
-        	if (newValue > 3 || newValue < -3) logRatioPrior = log(0);
-        	break;
+            if (newValue > 3 || newValue < -3) logRatioPrior = log(0);
+            break;
 
         case 3: // rSAV - relative susceptibility of vaccinated and not isolated adult contacts - LogNormal(0,sd)
-        	logRatioPrior = logdlnorm(newValue, 0.0, m_sdLNormSPrior) - logdlnorm(oldValue, 0.0, m_sdLNormSPrior);
-        	break;
+            logRatioPrior = logdlnorm(newValue, 0.0, m_sdLNormSPrior) - logdlnorm(oldValue, 0.0, m_sdLNormSPrior);
+            break;
 
         case 4: // rSAVI - relative susceptibility of vaccinated and isolated adult contacts - LogNormal(0,sd)
             logRatioPrior = logdlnorm(newValue, 0.0, m_sdLNormSPrior) - logdlnorm(oldValue, 0.0, m_sdLNormSPrior);
@@ -185,11 +182,11 @@ void McmcObject::update_parameter(int parID) {
             break;
 
         case 8: // rInfVac - relative infectivitiy of vaccinated adult cases - LogNormal(0,sd)
-        	logRatioPrior = logdlnorm(newValue, 0.0, m_sdLNormInfPrior) - logdlnorm(oldValue, 0.0, m_sdLNormInfPrior);
+            logRatioPrior = logdlnorm(newValue, 0.0, m_sdLNormInfPrior) - logdlnorm(oldValue, 0.0, m_sdLNormInfPrior);
             break;
 
         case 9: // rAsymptomatic - relative infectivity of asymptomatic cases - LogNormal(0,1.0)
-        	logRatioPrior = logdlnorm(newValue, 0.0, 1.0) - logdlnorm(oldValue, 0.0, 1.0);
+            logRatioPrior = logdlnorm(newValue, 0.0, 1.0) - logdlnorm(oldValue, 0.0, 1.0);
             break;
     }
 
