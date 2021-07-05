@@ -27,7 +27,6 @@ public:
             double mainHHsize = 2.0,
             double sdLNormInfPrior = 1.0,
             double sdLNormSPrior = 1.0,
-            double maxPCRDetectability = 10.0
             );
 	~McmcObject() {};
 
@@ -66,7 +65,6 @@ private:
 	std::vector<double> m_rateForRandomWalk;
 	double m_sdLNormInfPrior;
 	double m_sdLNormSPrior;
-	double m_maxPCRDetectability;
 	std::vector<Household> m_data;
 	size_t m_nHH;
 	double m_mainHHSize;
