@@ -41,13 +41,12 @@ std::vector<Household> buildData(std::string dataFile)
 
         Household currHH;
 
-        // while(std::getline(infile, line))
         for ( std::string line; std::getline(infile, line); )
         {
         	// Create a stringstream of the current line
         	std::istringstream in(line);
-        	
-			// Store information in variables 
+		
+		// Store information in variables 
         	in >> indid >> currhhid >> hhsize >> onsetTime >> isCase >> vaccinationStatus >> studyPeriod >> age >> identifiedIndex >> isolation;
 
             // Append previous household to the list of households
@@ -96,7 +95,6 @@ std::vector<Household> buildData(std::string dataFile)
 void runMCMC(McmcObject mcmc,
              std::string outputFile,
              int pas,
-             /*int pasPrinting,*/
              std::vector<int> idOfSelectedParameter,
              std::vector<std::string> paramNames
 )
@@ -107,7 +105,7 @@ void runMCMC(McmcObject mcmc,
 	int numberOfIteration = int(mcmc.iteration() / pas);
 	int nIterTimeInfection = mcmc.getNIterTimeInf();
 
-	// Column names
+	// Column names of the output file
 	std::string colNames="iteration logLik ";
 	for (size_t p=0; p < paramNames.size(); p++) colNames += paramNames[p] + " " + paramNames[p] + "_p " + paramNames[p] + "_a ";
 	colNames += "data_p data_a";
@@ -116,17 +114,18 @@ void runMCMC(McmcObject mcmc,
 	// MCMC chain
 	cout << "=============MCMC===============" << endl;
 
-    // Initial state
+    	// Initial state
 	mcmc.initialize_inf_time(); // Initialize infection time of all infected individuals
 	mcmc.initial_log_lik(); 
 	cout << "Initial log likelihood: " << mcmc.globalLogLik() << endl;
-
-    output << "0 " << mcmc.globalLogLik() << " "; // Log likelihood
-    for (size_t i = 0; i < mcmc.nParameters(); i++)
-        output << mcmc.parameter(i) << " 0 0 ";
-    output << "0 0" << endl;
-
-    // Chain
+	
+	output << "0 " << mcmc.globalLogLik() << " "; // Log likelihood
+	for (size_t i = 0; i < mcmc.nParameters(); i++) {
+	    output << mcmc.parameter(i) << " 0 0 ";
+	    output << "0 0" << endl;
+	}
+	
+	// Chain
 	for (iteration = 0; iteration < numberOfIteration; iteration++)
 	{
 	    mcmc.resetMoves();
@@ -139,22 +138,22 @@ void runMCMC(McmcObject mcmc,
 				mcmc.update_parameter(parID);
 			}
 
-			// Augmented data
+			// Data augmentation
 			for (int i=0; i < nIterTimeInfection; i++) {
-			    mcmc.update_augmented_data(); // Update loglik at the household level
+			    mcmc.update_augmented_data(); // Update log likelihood for all households
 			}
 		}
 
 		// Write log likelihood, parameter values, number of proposed/accepted move per parameter in the output file
-		// cout << (iteration + 1) * pas << ": " << mcmc.globalLogLik() << endl;
 		output << (iteration + 1) * pas << " " << mcmc.globalLogLik() << " "; // Log likelihood
 
-		for (size_t i = 0; i < mcmc.nParameters(); i++)
-            output << mcmc.parameter(i) << " " << mcmc.proposedMove(i) << " " << mcmc.acceptedMove(i) << " ";
-
-        output << mcmc.proposedMoveData() << " " << mcmc.acceptedMoveData() << endl;
+		for (size_t i = 0; i < mcmc.nParameters(); i++) {
+		    output << mcmc.parameter(i) << " " << mcmc.proposedMove(i) << " " << mcmc.acceptedMove(i) << " ";
+		}
+		
+		output << mcmc.proposedMoveData() << " " << mcmc.acceptedMoveData() << endl;
 	}
-
+	
 	output.close();
 }
 
@@ -170,28 +169,16 @@ int main(int argc, char **argv)
     std::string model = argv[1];
     std::string hhSize = argv[2];
     int deltaParameter = std::stoi( argv[3] ); //0: default value to 1; 1: estimated 
-    std::string chainID = argv[4];
+    std::string chainID = argv[4];    
+    double sdrInfVac = std::stod( argv[5] ); 
+    double sdrS = std::stod( argv[6] ); 
+    double asymp = std::stod( argv[7] ); //0.6, 0.95, 1 
 
-    double maxPCRDetectability = std::stod( argv[5] ); 
-    if (maxPCRDetectability != 10.0 && maxPCRDetectability != 15.0 ) // Either 10 or 15
-    	throw std::invalid_argument( "MaxPCRDetectability should be 10 or 15" );
-    
-    double sdrInfVac = std::stod( argv[6] ); 
-    double sdrS = std::stod( argv[7] ); 
-    double asymp = std::stod( argv[8] ); //0.6, 0.95, 1 
-
-    std::string vaccinationDefinition = argv[9]; // 1dose; 2doses
-    std::string runOnCluster = argv[10]; //0: desktop; 1: cluster
-    std::string database = argv[11]; // name of the data base 
+    std::string vaccinationDefinition = argv[8]; // 1dose; 2doses
+    std::string database = argv[9]; // name of the data base 
 
     double mainHHSize(2.0);
-    if (argc >= 13) mainHHSize = std::stod( argv[12] ) ; // Main Household size in the case of French Guiana data  
-
-    std::string fileName, infReduction;
-    if (argc >= 14) {// For simulation studies, name of the input file and % of infectivity reduction of vaccinated cases 
-    	fileName = argv[13]; 
-    	infReduction = argv[14];
-    }
+    if (argc >= 11) mainHHSize = std::stod( argv[10] ) ; // Main Household size 
 
     //==========Model parameters==========
     // Initial values
@@ -225,7 +212,7 @@ int main(int argc, char **argv)
         selectedParameter[7] = 0;
     }
 
-    if (hhSize == "0") { 			// Power coefficient on the household size
+    if (hhSize == "0") { 		// Power coefficient on the household size
     	selectedParameter[2] = 0; 
     } else {
     	if ( deltaParameter == 0 ) {
@@ -234,18 +221,20 @@ int main(int argc, char **argv)
     	}
     }
 
-    //if ( asymp == 0 ) { 	// Relative infectivity of asymptomatic cases
+    // Relative infectivity of asymptomatic cases
     selectedParameter[9] = 0; 
     parameter[9] = asymp;
-    //}
-
-	int parameterNumber;
-	std::vector<int> idOfSelectedParameter(0);
+    
+    // Vector with the indices of the parameters to estimate
+    int parameterNumber;
+    std::vector<int> idOfSelectedParameter(0);
     for(parameterNumber=0; parameterNumber<numberOfParameters; parameterNumber++)
     {
         if(selectedParameter[parameterNumber]==1) idOfSelectedParameter.push_back(parameterNumber);
     }
-
+	
+	
+   // Display model parametrization
     cout << "ID of selected parameters: "; 
     for (auto i = idOfSelectedParameter.begin(); i != idOfSelectedParameter.end(); ++i)
     	std::cout << parameterNames[*i] << ' ';
@@ -260,46 +249,30 @@ int main(int argc, char **argv)
     int numberOfIteration = 100000;
     int numberOfIterationTimeInfection = 1;
 
-    // Variance of random walk
+    // Standard deviation of the proposal distributions for the random walk
     std::vector<double> rateForRandomWalk(numberOfParameters);
     rateForRandomWalk = { 0.7, 0.6, 1.0, 2.2, 1.2, 1.3, 1.3, 1.8, 1.6, 0.5 };
 
     //==========Output files==========
     //Paths
-    std::string pathData;
-    std::string pathOutput;
-    if (runOnCluster == "0")
-    {
-        pathData = "V:/maylayan/Israel/Data/";
-        pathOutput = "V:/maylayan/Israel/Results/";
-    } else
-    {
-        pathData="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Data/";
-        pathOutput="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Results/";
-    }
+    std::string fileName, pathData, pathOutput;
+    pathData="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Data/";
+    pathOutput="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Results/";
 
     //Data file
     std::string dataFile;
     std::string outputFile; 
     // File structure :     	0: indid; 1: hhid; 2: hhsize; 3: onsetTime; 4: case; 5: vaccinated; 6: studyPeriod; 7: age; 8: identified index case; 9: isolation behavior from index case;
-    if (fileName.empty()) {
-    	std::stringstream sssdrInfVac, sssdrS, ssAsymp;
-    	sssdrInfVac << std::fixed << std::setprecision(1) << sdrInfVac;
-    	sssdrS << std::fixed << std::setprecision(1) << sdrS;
-        ssAsymp << std::fixed << std::setprecision(1) << asymp;
-    	dataFile=pathData + "2021_05_14_model_data_cpp_" + database + "_" + vaccinationDefinition + ".txt";							//Input file 
-		outputFile=pathOutput + vaccinationDefinition + "/test3/mcmc_" + database + "_" + model + "_" + hhSize + "_" + std::to_string(int(maxPCRDetectability)) + "_" +  sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt"; //Output file
-        // dataFile = pathData + "2021_05_14_model_data_cpp_smallhh_1dose_test.txt";
-        // outputFile=pathOutput + vaccinationDefinition + "/test2/test.txt";
+    std::stringstream sssdrInfVac, sssdrS, ssAsymp;
+    sssdrInfVac << std::fixed << std::setprecision(1) << sdrInfVac;
+    sssdrS << std::fixed << std::setprecision(1) << sdrS;
+    ssAsymp << std::fixed << std::setprecision(1) << asymp;
+    dataFile=pathData + "2021_05_14_model_data_cpp_" + database + "_" + vaccinationDefinition + ".txt"; 
+    outputFile=pathOutput + vaccinationDefinition + "/test3/mcmc_" + database + "_" + model + "_" + hhSize + "_" + std::to_string(int(maxPCRDetectability)) + "_" +  sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt";
 
-    } else {
-    	dataFile=pathData + vaccinationDefinition + "/simulation_" + infReduction + "/" + fileName;									//Input file 
-		outputFile=pathOutput + vaccinationDefinition + "/simulation_" + infReduction + "/mcmc_" + chainID + "_" + fileName;			//Output file
-    }
-    
+    // Display names of input file and output file
     cout << "Input file: " << dataFile << endl;
     cout << "Output file: " << outputFile << "\n\n";
-
 
     //==========Build data==========
     // Load data
@@ -316,9 +289,8 @@ int main(int argc, char **argv)
         numberOfIterationTimeInfection, 
         mainHHSize, 
         sdrInfVac, 
-        sdrS,
-        maxPCRDetectability        
-        );
+        sdrS
+    );
 
     //==========MCMC==========
     runMCMC(mcmc,
