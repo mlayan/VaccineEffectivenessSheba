@@ -11,7 +11,7 @@
 using namespace std;
 
 // Constant parameters
-// double maxPCRDetectability = 15.0;
+double maxPCRDetectability = 10;
 double mIncub = 1.63;
 double sdIncub = 0.5;
 double mGamma = 26.1;
@@ -64,14 +64,13 @@ double infectivityProfile(
                           double tinf,
                           int studyPeriod
                           ) {
-
-  // Density
+			  
+  // Instantaneous risk of infection
+  // The probability density function was estimated by Aschcroft et al., 2020 (DOI:10.4414/smw.2020.20336)
   double out = 0.0;
   double normCons = 0.0;
 
-  /*cout << "inf profile: " << shift + (studyPeriod - origin) << " || " << shift + (tinf-origin) << " || " << shift + (studyPeriod - infectionDate - 3.0) << " || " << shift + (tinf - infectionDate - 3.0) << endl;*/
-
-  if (infectionStatus == 1) { // Symptomatic infector
+  if (infectionStatus == 1) { // Symptomatic infector with a date of symptom onset
 
     if (origin-3 < studyPeriod && origin-3 < tinf) {
       normCons = pgamma(shift + (studyPeriod - origin)) - pgamma(shift - 3);
@@ -79,13 +78,12 @@ double infectivityProfile(
     }
    
 
-  } else { // Asymptomatic infector, they are infectious 2 days after their detection
+  } else { // Asymptomatic infector and symptomatic infectors with missing symptom onset, they are infectious 2 days after their detection
 
     if ( infectionDate + 2.0 < studyPeriod && infectionDate + 2.0 < tinf) {
       normCons = pgamma(shift - 3.0 + (studyPeriod - (infectionDate + 2.0)) ) - pgamma(shift - 3.0);
       out = dgamma(shift -3.0 + (tinf - infectionDate - 2.0)) / normCons;
     }
-
   }
 
   return out;
@@ -101,29 +99,25 @@ double cumulativeInfectivity(
                              )
 {
 
-  // Cumulative infectivity profile
+  // Cumulative risk of infection
+  // The probability density function was estimated by Aschcroft et al., 2020 (DOI: 10.4414/smw.2020.20336)
   double out = 0.0;
   double normCons = 0.0;
 
-  /*cout << "cumulative inf: " << shift + (studyPeriod - origin) << " || " << shift + (tinf-origin) << " || " << shift + (studyPeriod - infectionDate - 3.0) << " || " << shift + (tinf - infectionDate - 3.0) << endl;*/
-
-  // Cumulative density
-  if (infectionStatus == 1) { // Symptomatic infector
+  if (infectionStatus == 1) { // Symptomatic infector with a date of symptom onset
 
     if (origin-3 < studyPeriod && origin-3 < tinf) { // The last data point for the recipient should be in ]origin-3, +inf[
       normCons = pgamma(shift + (studyPeriod - origin)) - pgamma(shift - 3.0);
       out = (pgamma(shift+(tinf-origin)) - pgamma(shift - 3.0)) / normCons;
     }
 
-  } else { // Asymptomatic infector, they are infectious 2 days after their detection
+  } else { // Asymptomatic infector and symptomatic infectors with missing symptom onset, they are infectious 2 days after their detection
 
     if ( infectionDate + 2.0 < studyPeriod && infectionDate + 2.0 < tinf ){
       normCons = pgamma(shift - 3.0 + (studyPeriod - (infectionDate + 2.0)) ) - pgamma(shift - 3.0);
       out = pgamma(shift - 3.0 +(tinf - infectionDate - 2.0)) - pgamma(shift - 3.0);
       out /= normCons;
     }
-
-
   }
 
   return out;
@@ -133,7 +127,7 @@ double cumulativeInfectivity(
 // Household class - Methods
 //----------------------------------------------------------------------
 Household::Household() : m_size(0), m_notInfected(0), m_startFollowUp(-1) {
-    // Set size to 0
+    // Set size of vector attributes to 0
     m_indid.resize(0);
     m_onsetTime.resize(0.0);
     m_infected.resize(0);
@@ -148,63 +142,8 @@ Household::Household() : m_size(0), m_notInfected(0), m_startFollowUp(-1) {
     m_instLambda.resize(0);  
 }
 
-std::vector<int> Household::getSpInfected(std::vector<int> index) const{
-    unsigned i, k;
-    std::vector<int> output;
-    output.resize(0);
 
-    for(i=0; i<index.size();i++) {
-        k = index[i];
-        output.push_back(m_infected[k]);
-    }
-
-	return output;
-}
-
-// Add individual to household
-void Household::addIndividual(
-  int indid, 
-  double onsetTime, 
-  int isCase, 
-  int vaccinationStatus, 
-  int age, 
-  int studyPeriod, 
-  int identifiedIndex, 
-  int isolation
-  ) {
-
-	m_size += 1; // Update size
-
-	// Update vector attributes
-	m_indid.push_back(indid);
-	m_onsetTime.push_back(onsetTime);
-	m_infected.push_back(isCase);
-	m_studyPeriod.push_back(studyPeriod);
-	m_vaccinationStatus.push_back(vaccinationStatus);
-	m_age.push_back(age);
-  	m_index.push_back(identifiedIndex); 
-  	m_isolation.push_back(isolation);
-	if (m_startFollowUp < 0 ) m_startFollowUp = onsetTime;
-	else m_startFollowUp = std::min(m_startFollowUp, onsetTime);
-
-	// Add confirmed cases
-    if (isCase > 0) { // 1: symptomatic cases, 2: asymptomatic cases, 3: symptomatic cases with unknown symptom onset
-        m_confCase.push_back(m_size-1);
-    } else {
-        m_notInfected += 1;
-    }
-
-	// Initialize infection time
-	m_infTime.push_back(1000.0);
-}
-
-// Change infection time
-void Household::setInfTime(int index, double infTime) {
-	m_infTime[index] = infTime;
-}
-
-
-// Reinitialize object
+// Reinitialize household object
 void Household::newHousehold() {
   m_size = 0;
   m_notInfected = 0;	
@@ -221,24 +160,44 @@ void Household::newHousehold() {
   m_infTime.clear();
 }
 
+// Add an individual to the household
+void Household::addIndividual(
+  int indid, 
+  double onsetTime, 
+  int isCase, 
+  int vaccinationStatus, 
+  int age, 
+  int studyPeriod, 
+  int identifiedIndex, 
+  int isolation
+  ) {
 
-void Household::initialInfTime(int index, double maxPCRDetectability, std::mt19937_64& gen) {
+	m_size += 1; // Update size of the household
 
-    double incubPeriod(0.0);
+	// Update vector attributes
+	m_indid.push_back(indid);
+	m_onsetTime.push_back(onsetTime);
+	m_infected.push_back(isCase);
+	m_studyPeriod.push_back(studyPeriod);
+	m_vaccinationStatus.push_back(vaccinationStatus);
+	m_age.push_back(age);
+  	m_index.push_back(identifiedIndex); 
+  	m_isolation.push_back(isolation);
+	
+	// Start of the follow-up of the household
+	// It corresponds to the first symptom onset or the first detection date in the household
+	if (m_startFollowUp < 0 ) m_startFollowUp = onsetTime;
+	else m_startFollowUp = std::min(m_startFollowUp, onsetTime);
 
-    if (m_infected[index] == 1) {              // Symptomatic case with known symptom onset 
-      incubPeriod = rlnorm(gen, mIncub, sdIncub);
-      while (incubPeriod < 3.0 || incubPeriod > 30.0) {
-        incubPeriod = rlnorm(gen, mIncub, sdIncub);
-      }
-      m_infTime[index] = m_onsetTime[index] - incubPeriod;
+	// Add confirmed cases
+	if (isCase > 0) { // 1: symptomatic cases, 2: asymptomatic cases, 3: symptomatic cases with unknown symptom onset
+	    m_confCase.push_back(m_size-1);
+	} else {
+	    m_notInfected += 1;
+	}
 
-    } else if (m_infected[index] > 1 ) {      // Asymptomatic case or symptomatic case with unknown symptom onset
-      m_infTime[index] = runif(gen, m_onsetTime[index] - maxPCRDetectability, m_onsetTime[index]);
-
-    } else {		// Covid-free household members or household members with unknown final outcome
-    	m_infTime[index] = 1000.0;
-    }
+	// Initialize infection time
+	m_infTime.push_back(1000.0);
 }
 
 
@@ -276,13 +235,64 @@ void Household::displayHH() {
 }
 
 
-// Compute the  
-void Household::compute_lambdas(int display) {
+// Access the infection status of a set of individuals 
+std::vector<int> Household::getSpInfected(std::vector<int> index) const{
+    
+    unsigned i, k;
+    std::vector<int> output;
+    output.resize(0);
+
+    for(i=0; i<index.size();i++) {
+        k = index[i];
+        output.push_back(m_infected[k]);
+    }
+    
+    return output;
+}
+
+
+// Initialize the infection status of a single individual
+void Household::initialInfTime(int index, std::mt19937_64& gen) {
+
+    double incubPeriod(0.0);
+
+    if (m_infected[index] == 1) {              // Symptomatic case with known symptom onset 
+      // The incubation period was estimated by McAloon et al., 2020 (DOI: 10.1136/bmjopen-2020-039652)
+      // It was truncated to [3-30] days so that all symptomatic individuals had the same infectivity profile
+      incubPeriod = rlnorm(gen, mIncub, sdIncub); 
+      while (incubPeriod < 3.0 || incubPeriod > 30.0) {
+        incubPeriod = rlnorm(gen, mIncub, sdIncub);
+      }
+      m_infTime[index] = m_onsetTime[index] - incubPeriod;
+
+    } else if (m_infected[index] > 1 ) {      // Asymptomatic case or symptomatic case with unknown symptom onset
+      // Infection occurred in the 10 days before detection by PCR 
+      m_infTime[index] = runif(gen, m_onsetTime[index] - maxPCRDetectability, m_onsetTime[index]);
+
+    } else {		// Covid-free household members or household members with unknown final outcome
+    	m_infTime[index] = 1000.0;
+    }
+}
+
+
+// Change infection time of a single individual
+void Household::setInfTime(int index, double infTime) {
+	m_infTime[index] = infTime;
+}
+
+
+// At iteration 0 of the MCMC, compute the matrix of the pairwise instantaneous risk 
+// of infection (m_instLambda) and the pairwise cumulative risk of infection (m_cumLambda) 
+// between individuals in the household
+// The first order of index corresponds to infectors and the second to infectees
+void Household::compute_lambdas() {
   
   int infector, infectee;
-  double t1;
+  
+  // Last day of follow-up for not infected contacts, symptom onset for symptomatic secondary cases, detection date by PCR for asymptomatic secondary cases
+  double t1;  
 
-  // Set m_cumLambda and m_instLambda size
+  // Set m_cumLambda and m_instLambda size according to the household size
   m_cumLambda.resize(m_size);
   m_instLambda.resize(m_size);
   for (infector=0; infector<m_size; infector++) {
@@ -300,7 +310,7 @@ void Household::compute_lambdas(int display) {
         t1 = m_infTime[infectee];
       }
 
-      // Cumulative transmission rate for household contacts
+      // Cumulative transmission rate from infector to secondary cases
       if (m_infTime[infector] != 1000.0 && m_infTime[infector] < t1) {
 
         m_cumLambda[infector][infectee] += cumulativeInfectivity(
@@ -313,7 +323,7 @@ void Household::compute_lambdas(int display) {
 
       }
 
-      // Instantaneous transmission rate for secondary cases
+      // Instantaneous transmission rate from infector to secondary cases
       if (m_infTime[infector] != 1000.0 && m_infTime[infectee] != 1000.0 && m_infTime[infector] < t1) {
 
         m_instLambda[infector][infectee] += infectivityProfile(
@@ -328,32 +338,17 @@ void Household::compute_lambdas(int display) {
     }
   }
 
-   if (display) {
-    for (int i=0; i<m_size;i++) {
-      for (int j=0; j<m_size; j++) {
-        cout << m_cumLambda[i][j] << " "; 
-      }
-      cout << endl;
-    }
-    cout << endl;
-
-    for (int i=0; i<m_size; i++) {
-      cout << m_infTime[i] << " ";
-    }
-    cout << endl;
-  }
-
 }
 
 // Update m_cumLambda and m_instLambda matrices during data augmentation
-void Household::update_lambdas(int ind, int display) {
+void Household::update_lambdas(int ind) {
   
   int infector, infectee;
   double t1;
 
-  // Ind is the infector
+  // Update rows where ind is the infector
   for (infectee=0; infectee<m_size; infectee++) {
-    // Reinitialize
+    // Reinitialize rows 
     m_cumLambda[ind][infectee] = 0;
     m_instLambda[ind][infectee] = 0;
 
@@ -390,11 +385,11 @@ void Household::update_lambdas(int ind, int display) {
   }
 
 
-  // Ind is an infectee
+  // Update columns where ind is an infectee
   t1 = m_infTime[ind];
 
   for (infector=0; infector<m_size;infector++) {    
-    // Reinitialize
+    // Reinitialize column 
     m_cumLambda[infector][ind] = 0;
     m_instLambda[infector][ind] = 0;
 
@@ -421,27 +416,12 @@ void Household::update_lambdas(int ind, int display) {
       );
     }
   }
-
-  if (display) {
-    for (int i=0; i<m_size;i++) {
-      for (int j=0; j<m_size; j++) {
-        cout << m_cumLambda[i][j] << " "; 
-      }
-      cout << endl;
-    }
-    
-    for (int i=0; i<m_size; i++) {
-      cout << m_infTime[i] << " ";
-    }
-    cout << endl;
-  }
-
 }
 
 
 
-// Calculate LogLik for the Household for one parameter
-double Household::newInfTime(int index, double maxPCRDetectability, std::mt19937_64& gen) {
+// Sample a new infection time for a single individual
+double Household::newInfTime(int index, std::mt19937_64& gen) {
 
     double infDate(0.0), incubPeriod(0.0);
 
@@ -463,7 +443,8 @@ double Household::newInfTime(int index, double maxPCRDetectability, std::mt19937
     return infDate;
 }
 
-
+// Probability density of the incubation period for symptomatic cases and 
+// the time from infection to detection for asymptomatic cases
 double Household::pIncub(int index, double infTime, double maxPCRDetectability) {
 
     double out = 0.0;
@@ -482,16 +463,14 @@ double Household::pIncub(int index, double infTime, double maxPCRDetectability) 
 }
 
 
-
+// Log likelihood of the household
 double Household::compute_log_lik(
   std::vector<double> parameter, 
   std::vector<int> selectedParam, 
-  double maxPCRDetectability, 
-  double mainHHSize, 
-  int display
+  double mainHHSize
   ) {
 
-  // Identify index case
+  // Identify the first case in the household
   int firstCase(0);
   auto it = std::min_element(m_infTime.begin(), m_infTime.end());
   double t0 = *it;
@@ -502,28 +481,22 @@ double Household::compute_log_lik(
   // Log Likelihood
   double LL = 0.0;
 
-  for (int i = 0; i < m_size; i++) { // All individuals
-
-    if (display) cout << "Individual " << i << endl;
+  for (int i = 0; i < m_size; i++) { 
     
-    if ( i == firstCase ) {                                           		// Incubation period of 1st infected
-      LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
+    if ( i == firstCase ) {                                           		// Contribution if the 1st case (incubation/detection period)
+      LL += log( pIncub(i, m_infTime[i]) );
 
     } else if ( m_onsetTime[i] != 1000.0 && i != firstCase) {                 // Contribution of the secondary cases
-        LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) );
-      	LL += log( pInf(i, t0, parameter, selectedParam, mainHHSize, display) );
-      	LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
+        LL += log( S(i, t0, parameter, selectedParam, mainHHSize) );
+      	LL += log( pInf(i, t0, parameter, selectedParam, mainHHSize) );
+      	LL += log( pIncub(i, m_infTime[i]) );
 
-    } else {																// Non infected individuals
-      LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) ); 
+    } else {									// Contribution of the contacts who were not infected
+      LL += log( S(i, t0, parameter, selectedParam, mainHHSize) ); 
 
     }
-    if (display) cout << "end individual" << endl;
-
   }
-
-  if (display) cout << "LL " << LL << endl;
-
+  
   return LL;
 }
 
@@ -534,8 +507,7 @@ double Household::pInf(
   double t0, 
   std::vector<double> parameter, 
   std::vector<int> selectedParam, 
-  double mainHHSize, 
-  int display
+  double mainHHSize
   ){
 
     // Instaneous risk of infection from community
@@ -561,7 +533,6 @@ double Household::pInf(
 	    if ( selectedParam[4] && m_age[curr] == 1 && m_vaccinationStatus[curr] ) beta *= parameter[4];
 	    if ( selectedParam[5] && m_age[curr] == 1 && m_vaccinationStatus[curr] == 0 ) beta *= parameter[5];
 	    if ( selectedParam[7] && m_age[curr] == 0 ) beta *= parameter[7];
-
 
     } else {                          // Infectees who did not isolate from the index case
     	if ( selectedParam[3] && m_age[curr] == 1 && m_vaccinationStatus[curr] ) beta *= parameter[3];
@@ -589,11 +560,11 @@ double Household::S(
   double t0, 
   std::vector<double> parameter, 
   std::vector<int> selectedParam, 
-  double mainHHSize, 
-  int display
+  double mainHHSize
   ) {
 
-  // If the individual is not infected, it's infection
+  // If the individual is not infected, the infection time is coded as the  
+  // last day of follow-up 
   double t1;
   if ( m_onsetTime[curr] == 1000.0 ) {
   	t1 = m_studyPeriod[curr];
@@ -606,18 +577,17 @@ double Household::S(
 
   // Cumulative risk of infection from other household members
   double beta(0.0), beta_i(0.0);
-	for (int ind=0; ind<m_size; ++ind) {
-
-		beta_i = m_cumLambda[ind][curr];
-
-	    // Relative infectivity of asymptomatic cases versus symptomatic cases
-	    if ( m_infected[ind] == 2) beta_i *= parameter[9];
-
-	    // Relative infectivity of vaccinated infectors
-	    if ( selectedParam[8] == 1 && m_vaccinationStatus[ind] == 1 ) beta_i *= parameter[8];
-
-	    beta += beta_i;
-	}
+  for (int ind=0; ind<m_size; ++ind) {
+  	beta_i = m_cumLambda[ind][curr];
+	
+	// Relative infectivity of asymptomatic cases versus symptomatic cases
+	if ( m_infected[ind] == 2) beta_i *= parameter[9];
+	
+	// Relative infectivity of vaccinated infectors
+	if ( selectedParam[8] == 1 && m_vaccinationStatus[ind] == 1 ) beta_i *= parameter[8];
+	
+	beta += beta_i;
+   }
 
   // Relative susceptibility
   if ( m_isolation[curr] ) {        // Infectees who isolated from the index case
@@ -633,12 +603,11 @@ double Household::S(
 
   // Instantaneous per capita transmission rate
   beta *= parameter[1];
-  if (display) cout << "S " << parameter[1] << " " << beta << endl; 
-
+  
   // If transmission hazard depends on household size
   if (selectedParam[2] == 1 && mainHHSize == 2.0) beta /= pow(m_size, parameter[2]);
   if (selectedParam[2] == 1 && mainHHSize != 2.0) beta /= pow(m_size / mainHHSize, parameter[2]);
-
-	return exp( -(alpha + beta ) );
+  
+  return exp( -(alpha + beta ) );
 }
 
