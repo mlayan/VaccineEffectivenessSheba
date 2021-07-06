@@ -167,18 +167,20 @@ int main(int argc, char **argv)
 
     // Arguments passed to main
     std::string model = argv[1];
-    std::string hhSize = argv[2];
-    int deltaParameter = std::stoi( argv[3] ); //0: default value to 1; 1: estimated 
-    std::string chainID = argv[4];    
-    double sdrInfVac = std::stod( argv[5] ); 
-    double sdrS = std::stod( argv[6] ); 
-    double asymp = std::stod( argv[7] ); //0.6, 0.95, 1 
-
-    std::string vaccinationDefinition = argv[8]; // 1dose; 2doses
-    std::string database = argv[9]; // name of the data base 
+    std::string chainID = argv[2];    
+    double sdrInfVac = std::stod( argv[3] ); 
+    double sdrS = std::stod( argv[4] ); // 0.7; 1; 2
+    double asymp = std::stod( argv[5] ); //0.6; 1 
+    std::string vaccinationDefinition = argv[6]; // 1dose; 2doses
+    std::string database = argv[7]; // full_database; known_outcome; strict 
+    std::string strict;
+    if (database == "strict") {
+        strict = "_strict";
+        database = "full_database";
+    }
 
     double mainHHSize(2.0);
-    if (argc >= 11) mainHHSize = std::stod( argv[10] ) ; // Main Household size 
+    if (argc >= 9) mainHHSize = std::stod( argv[8] ) ; // Main Household size 
 
     //==========Model parameters==========
     // Initial values
@@ -211,16 +213,7 @@ int main(int argc, char **argv)
         selectedParameter[6] = 0;
         selectedParameter[7] = 0;
     }
-
-    if (hhSize == "0") { 		// Power coefficient on the household size
-    	selectedParameter[2] = 0; 
-    } else {
-    	if ( deltaParameter == 0 ) {
-    		selectedParameter[2] = 0;
-    		parameter[2] = 1; 
-    	}
-    }
-
+    
     // Relative infectivity of asymptomatic cases
     selectedParameter[9] = 0; 
     parameter[9] = asymp;
@@ -233,7 +226,6 @@ int main(int argc, char **argv)
         if(selectedParameter[parameterNumber]==1) idOfSelectedParameter.push_back(parameterNumber);
     }
 	
-	
    // Display model parametrization
     cout << "ID of selected parameters: "; 
     for (auto i = idOfSelectedParameter.begin(); i != idOfSelectedParameter.end(); ++i)
@@ -241,7 +233,6 @@ int main(int argc, char **argv)
     cout << endl;
 
     cout << "Main household size: " << mainHHSize << "\n\n";
-
 
     //==========MCMC parameters==========
     size_t seed(20210329);
@@ -255,20 +246,19 @@ int main(int argc, char **argv)
 
     //==========Output files==========
     //Paths
-    std::string fileName, pathData, pathOutput;
-    pathData="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Data/";
-    pathOutput="/pasteur/sonic/homes/maylayan/MMMICovid/Israel/Results/";
+    std::string pathData, pathOutput;
+    pathData="../../data/";
+    pathOutput="../../results/";
 
     //Data file
-    std::string dataFile;
-    std::string outputFile; 
+    std::string fileName, dataFile, outputFile; 
     // File structure :     	0: indid; 1: hhid; 2: hhsize; 3: onsetTime; 4: case; 5: vaccinated; 6: studyPeriod; 7: age; 8: identified index case; 9: isolation behavior from index case;
     std::stringstream sssdrInfVac, sssdrS, ssAsymp;
     sssdrInfVac << std::fixed << std::setprecision(1) << sdrInfVac;
     sssdrS << std::fixed << std::setprecision(1) << sdrS;
     ssAsymp << std::fixed << std::setprecision(1) << asymp;
-    dataFile=pathData + "2021_05_14_model_data_cpp_" + database + "_" + vaccinationDefinition + ".txt"; 
-    outputFile=pathOutput + vaccinationDefinition + "/test3/mcmc_" + database + "_" + model + "_" + hhSize + "_" + std::to_string(int(maxPCRDetectability)) + "_" +  sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt";
+    dataFile=pathData + "2021_05_14_model_data_cpp_" + database + "_" + vaccinationDefinition + strict + ".txt"; 
+    outputFile=pathOutput + "/mcmc_" + database + "_" + model + strict + "_" + vaccinationDefinition + "_" + sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt";
 
     // Display names of input file and output file
     cout << "Input file: " << dataFile << endl;
