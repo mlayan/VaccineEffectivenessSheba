@@ -14,7 +14,7 @@ The code has been tested using g++ (7.2.0), Boost (1.72.0), and R (4.0.2) on Lin
 
 Set the variable CC in the Makefile to point to the compiler installed on your system
 
-Compile the code by typing (in your terminal): `make`
+In the `cpp/mcmc/` directory, compile the code by typing (in your terminal): `make`
 
 The compilation takes a few seconds and creates the executable `program.out`.
 
@@ -35,7 +35,6 @@ The space-separated file `data/2021_05_14_full_database_2doses.txt` contains the
 * the index cases (0: index case, 1: household contact)
 * the isolation status (0: no isolation, 1: partial isolation, 2: complete isolation)
 
-
 Additional data files were used in the sensitivity analysis (Figure 4 and Supplementary Materials):
 
 * `2021_05_14_full_database_1dose.txt` contains the same households than the principal anlaysis and vaccination is assumed effective 15 days after the 1st dose 
@@ -46,11 +45,11 @@ Additional data files were used in the sensitivity analysis (Figure 4 and Supple
 
 Pass the following options as input arguments to `program.out` in your terminal:
 
-* Length of the MCMC chain
+* Length of the MCMC chain (100000 in the article)
 * ID of the MCMC chain (1; 2; 3)
-* log-sd of the log-normal prior distribution of the relative infectivity parameter
-* log-sd of the log-normal prior distribution of the relative susceptibility parameters
-* Relative infectivity of asymptomatic cases compared to symptomatic cases
+* log-sd of the log-normal prior distribution of the relative infectivity parameter (0.7, 1 or 2 in the article)
+* log-sd of the log-normal prior distribution of the relative susceptibility parameters (0.7, 1 or 2 in the article)
+* Relative infectivity of asymptomatic cases compared to symptomatic cases (0.6 or 1 in the article)
 * Effective vaccination definition (1dose; 2doses)
 * Database (full_database; know_outcome; strict)
 
@@ -59,8 +58,10 @@ The output will be written to a space-delimited file in the `results/` folder. I
 
 ### Simulating household epidemics
 
+The script `R/1.simulation.R` allows one to simulate household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in `cpp/simulation`.
+This script depends on two R libraries: 1) tidyverse and 2) Rcpp.
 
 ### Visualizing the results
 
-The scripts `1.output_analysis.R`, `3.model_adequacy.R` and `4.sensitivity_analysis.R` allows one to visualize the estimations. 
+The scripts `R/2.output_analysis.R` and `R/3.sensitivity_analysis.R` allows one to visualize parameter estimates in the baseline scenario and in the sensitivity analysis, respectively. All figures and tables are generated in the `figures/` and `tables/` directories. 
 These scripts depend on two R libraries: 1) tidyverse and 2) gridExtra. 
