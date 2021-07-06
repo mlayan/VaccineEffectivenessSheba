@@ -183,7 +183,7 @@ int main(int argc, char **argv)
     if (database == "full_database") {
 	    mainHHSize = 4.0;
     } else {
-	    mainHHSize = 3.0;
+	    mainHHSize = 5.0;
     }
 
     //==========Model parameters==========
