@@ -34,35 +34,32 @@ DataFrame hhEpidemic(
 
   // Initialize transmission vectors
   IntegerVector infectionStatus = H["infectionStatus"];
-  CharacterVector origins(hhsize);
-  NumericVector dds_temp = H["dds"];
-  NumericVector dds = clone(dds_temp);
-  NumericVector ddi = rep(1000.0, hhsize);
+  NumericVector dds_temp = H["dds"]; // Symptom onset for symptomatic cases or detection date for asymptomatic cases
+  NumericVector dds = clone(dds_temp); 
+  NumericVector ddi = rep(1000.0, hhsize); // Infection date
 
   // Susceptible and index cases at the start of the epidemic
   IntegerVector infectors(0);
   IntegerVector sus(0);
-  double lastDate = max(studyPeriods);
+  double lastDate = max(studyPeriods); // End of follow-up
   double firstInfection = 1000.0;
 
   for (int ind=0; ind<hhsize; ind++) {
 
   	if (dds[ind] != 1000.0) { // Index cases
+		infectors.push_back(ind);
+    		if (infectionStatus[ind] == 1) { // Symptomatic index case
+    			ddi[ind] = rIncub(dds[ind]);
+    		} else { 			// Asymptomatic index case
+    			ddi[ind] = rInfectionAsymptomatic(dds[ind]);
+    		}
 
-  		infectors.push_back(ind);
-    	if (infectionStatus[ind] == 1) { // Symptomatic cases
-    		ddi[ind] = rIncub(dds[ind]);
-    	} else { // Asymptomatic cases
-    		ddi[ind] = rInfectionAsymptomatic(dds[ind]);
+    		// First infection time
+    		firstInfection = min(firstInfection, ddi[ind]);
+    	
+    	} else { // At risk members
+    		sus.push_back(ind);
     	}
-
-    	// First infection time
-    	firstInfection = min(firstInfection, ddi[ind]);
-    	//lastDate = min(lastDate, studyPeriods[ind]);
-
-    } else { // Susceptibles
-    	sus.push_back(ind);
-    }
   }
 
   // Agent based epidemic within household
@@ -75,10 +72,10 @@ DataFrame hhEpidemic(
     IntegerVector newInfected;
     NumericVector infected = runif(sus.size());
     
-    // Loop on susceptibles 
+    // Force of infection of at risk individuals at curr_time 
     for (int s = 0; s < sus.size(); ++s) {
-      // Individual
-      int ind = sus[s];
+      
+      int ind = sus[s]; // Individual
 
       // Probability of getting infected
       NumericVector FOIS = foi(
@@ -101,37 +98,41 @@ DataFrame hhEpidemic(
       NumericVector fois = clone(FOIS);
 
   		if (fois.size() > 1) { // fois[0] corresponds to the infection within the community
-  			if ( vaccinated[ind] == 1 && isolated[ind] > 0 && adult[ind] == 1 ) { // Relative susceptibility of isolated vaccinated adults 
+  			if ( vaccinated[ind] == 1 && isolated[ind] > 0 && adult[ind] == 1 ) {
+			// Relative susceptibility of isolated vaccinated adults/teenagers 
   				for (int i = 1; i<fois.size(); ++i) fois[i] *= rSAVI;
 
-  			} else if ( vaccinated[ind] == 1 && isolated[ind] < 1 && adult[ind] == 1) { // Relative susceptibility of unisolated vaccinated adults
+  			} else if ( vaccinated[ind] == 1 && isolated[ind] < 1 && adult[ind] == 1) { 
+			// Relative susceptibility of unisolated vaccinated adults/teenagers
   				for (int i = 1; i<fois.size(); ++i) fois[i] *= rSAV;
 
-  			} else if ( vaccinated[ind] == 0 && isolated[ind] > 0 && adult[ind] == 1 ) { // Relative susceptibility of isolated unvaccinated adults
+  			} else if ( vaccinated[ind] == 0 && isolated[ind] > 0 && adult[ind] == 1 ) { 
+			// Relative susceptibility of isolated unvaccinated adults/teenagers
   				for (int i = 1; i<fois.size(); ++i) fois[i] *= rSAI;
 
-  			} else if ( vaccinated[ind] == 0 && isolated[ind] > 0 && adult[ind] == 0 ) { // Relative susceptibility of isolated children
+  			} else if ( vaccinated[ind] == 0 && isolated[ind] > 0 && adult[ind] == 0 ) { 
+			// Relative susceptibility of isolated children under 12 y.o.
   				for (int i = 1; i<fois.size(); ++i) fois[i] *= rSCI;
 
-  			} else if ( vaccinated[ind] == 0 && isolated[ind] < 1 && adult[ind] == 0) { // Relative susceptibility of unisolated children
+  			} else if ( vaccinated[ind] == 0 && isolated[ind] < 1 && adult[ind] == 0) { 
+			// Relative susceptibility of unisolated children under 12 y.o.
   				for (int i = 1; i<fois.size(); ++i) fois[i] *= rSC;
 
   			}
   		}
 
       
-      // Is ind infected at curr_time?
-      double pInfection = 1-exp( -sum(fois) );
-      double asymptomatic = runif(1)[0];
+      double pInfection = 1-exp( -sum(fois) ); // Probability of infection at curr_time
+      double asymptomatic = runif(1)[0]; 
 
-      if ( infected[s] < pInfection) {
+      if ( infected[s] < pInfection) { // Ind is infected
         // Update ddi and dds
         ddi[ind] = curr_time + dt*runif(1)[0];
 
-        if (asymptomatic < pAsymptomatic[hhsize-2]) {
+        if (asymptomatic < pAsymptomatic[hhsize-2]) { // Asymptomatic case
         	infectionStatus[ind] = 2;
         	dds[ind] = ddi[ind] + detectionPeriod();
-        } else {
+        } else {					// Symptomatic case
         	infectionStatus[ind] = 1;
         	dds[ind] = ddi[ind] + incubPeriod();
         }
@@ -141,22 +142,18 @@ DataFrame hhEpidemic(
       }
     }
     
+    
     // Update sus and infectors
     for (int index = 0; index < newInfected.size(); ++index) {
-    	
     	infectors.push_back(newInfected[index]);
-
     	for (int i = 0; i < sus.size(); ++i) {
-    		if (newInfected[index] == sus[i]) {
-    			sus.erase(i);
-    		}
+    		if (newInfected[index] == sus[i]) sus.erase(i);
         }
     }
 
-
-   }
+  }
   
-  // Output
+  // Output in R data frame format
   return DataFrame::create(
   	_("indid") = H["indid"],
   	_("hhid") = H["hhid"],
@@ -166,10 +163,9 @@ DataFrame hhEpidemic(
   	_("dds") = dds,
   	_("infectionStatus") = infectionStatus,
   	_("vaccinated") = vaccinated,
-    _("isolation") = isolated,
+	_("isolation") = isolated,
   	_("studyPeriod") = studyPeriods,
-  	_("adult") = adult,
-  	_("origins") = origins
+  	_("adult") = adult
   	);
 }
 
