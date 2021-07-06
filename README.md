@@ -59,9 +59,11 @@ The output will be written to a space-delimited file in the `results/` folder. I
 ### Simulating household epidemics
 
 The script `R/1.simulation.R` allows one to simulate household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in `cpp/simulation`.
+
 This script depends on two R libraries: 1) tidyverse and 2) Rcpp.
 
 ### Visualizing the results
 
 The scripts `R/2.output_analysis.R` and `R/3.sensitivity_analysis.R` allows one to visualize parameter estimates in the baseline scenario and in the sensitivity analysis, respectively. All figures and tables are generated in the `figures/` and `tables/` directories. 
+
 These scripts depend on two R libraries: 1) tidyverse and 2) gridExtra. 
