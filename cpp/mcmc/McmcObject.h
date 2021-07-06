@@ -23,7 +23,6 @@ public:
             std::vector<double> parameter,
             std::vector<int> selectedParameter,
             std::vector<double> rateForRandomWalk,
-            int nIterTimeInfection = 1, 
             double mainHHsize = 2.0,
             double sdLNormInfPrior = 1.0,
             double sdLNormSPrior = 1.0,
@@ -52,7 +51,6 @@ public:
 
 private:
 	int m_iterations;
-	int m_iterTimeInfection;
 	std::mt19937_64 m_gen;
 	double m_globalLogLik;
 	std::vector<double> m_hhLogLik;
