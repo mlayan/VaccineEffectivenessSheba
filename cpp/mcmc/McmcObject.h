@@ -31,7 +31,6 @@ public:
 
 	int getNumbHH() const { return m_data.size(); }
 	int iteration() const { return m_iterations; };
-	int getNIterTimeInf() const {return m_iterTimeInfection; };
 	int proposedMove(int index) const {return m_numberOfMoveProposed[index]; };
 	int acceptedMove(int index) const {return m_numberOfMoveAccepted[index]; };
 	int proposedMoveData() const {return m_proposedMoveData; };
