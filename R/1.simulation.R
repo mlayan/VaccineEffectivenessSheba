@@ -24,7 +24,7 @@ sourceCpp("cpp/simulation/simulate_epidemic.cpp")
 ## Load and prepare household data
 ####################################################
 # Load input data
-bdd = read.table("dta/2021_05_14_model_data_cpp_full_database_2doses.txt",
+bdd = read.table("data/2021_05_14_model_data_cpp_full_database_2doses.txt",
                  sep = " ", stringsAsFactors = F, header = F)
 colnames(bdd) = c("indid", "hhid", "hhsize", "dds", "infectionStatus", "vaccinated", "studyPeriod", "adult", "index", "isolation")
 
@@ -53,11 +53,11 @@ pAsymptomatic = sapply(
   }
 )
 
-# Convert into list format
-hhList = unique(bdd$hhid)
-data = lapply(hhList, function(x) bdd[bdd$hhid ==x, ])
+# Store input data
+data = bdd
 
 # Input data for simulation
+hhList = unique(bdd$hhid)
 bdd$dds[bdd$index == 0] = 1000
 bdd$infectionStatus[bdd$index == 0] = 0
 inputData = lapply(hhList, function(x) bdd[bdd$hhid == x, ])
@@ -149,7 +149,7 @@ write.csv(expected_sar,
 ## distributions
 ############################################
 # Observed number of cases per household size
-observed_dist = do.call("rbind", data) %>%
+observed_dist = data %>%
   group_by(hhid) %>%
   summarise(hhsize = n(), nInf = sum(infectionStatus > 0)) %>%
   group_by(hhsize, nInf) %>%
