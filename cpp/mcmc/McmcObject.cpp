@@ -38,7 +38,6 @@ McmcObject::McmcObject() {
     m_gen.seed(123);
     m_globalLogLik = 0.0;
     m_iterations = 0;
-    m_iterTimeInfection = 0;
     m_acceptedMoveData = 0;
     m_proposedMoveData = 0;
     m_rateForRandomWalk.resize(0);
@@ -62,7 +61,6 @@ McmcObject::McmcObject(
                        std::vector<double> parameter,
                        std::vector<int> selectedParameter,
                        std::vector<double> rateForRandomWalk,
-                       int nIterTimeInfection, 
                        double mainHHSize, 
                        double sdLNormInfPrior,
                        double sdLNormSPrior
@@ -78,7 +76,6 @@ McmcObject::McmcObject(
     m_gen.seed(seed);
     m_hhLogLik.resize(data.size());
     m_iterations = nIterations;
-    m_iterTimeInfection = nIterTimeInfection;
     m_mainHHSize = mainHHSize;
     m_rateForRandomWalk = rateForRandomWalk;
     m_sdLNormInfPrior = sdLNormInfPrior;
