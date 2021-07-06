@@ -15,7 +15,7 @@ double maxPCRDetectability = 10.0;
 // [[Rcpp::export]]
 double incubPeriod() 
   {
-  // Incubation period
+  // Truncated incubation period for symptomatic cases
   double d = rlnorm(1, mIncub, sdIncub)[0];
   while(d < 3 || d > 30) d = rlnorm(1, mIncub, sdIncub)[0];
   return d;
@@ -26,7 +26,7 @@ double incubPeriod()
 // [[Rcpp::export]]
 double rIncub(double d) 
   {
-  // Draw random incubation period for symptomatic cases
+  // Truncated incubation period for symptomatic cases
   double pIncub = rlnorm(1, mIncub, sdIncub)[0];
   while (pIncub < 3.0 || pIncub > 30.0) {
     pIncub = rlnorm(1, mIncub, sdIncub)[0];  
@@ -38,14 +38,18 @@ double rIncub(double d)
 
 //////////////////////////////////////////////
 // [[Rcpp::export]]
-double detectionPeriod() {
+double detectionPeriod() 
+{
+	// Time period between infection and detection by PCR for asymptomatic cases
 	return runif(1, 0, maxPCRDetectability)[0];
 }
 
 
 //////////////////////////////////////////////
 // [[Rcpp::export]]
-double rInfectionAsymptomatic(double d) {
+double rInfectionAsymptomatic(double d) 
+{
+	// Time period between infection and detection by PCR for asymptomatic cases
 	return runif(1, d-maxPCRDetectability, d)[0];
 }
 
@@ -70,16 +74,19 @@ NumericVector foi(
 	// Force of infection from 
 	// 	0: community
 	// 	1 to #infected: infected household contacts
+	
+	// Initialize foi vector
 	NumericVector fois(symptomOnset.size() + 1);
 
 	//Infection by the community
 	fois[0] = alpha*dt;
 
-	// Relative infectivity
+	// Relative infectivity of vaccinated cases at time t
 	IntegerVector allVaccinated = rep(1, vaccinatedInfectors.size());
 	NumericVector relativeInfectivity = ifelse(vaccinatedInfectors == allVaccinated, rInfVac, 1.0);
 
-	// Parameters
+	// Parameters of the infectivity profile
+	// Shifted gamma distribution from Aschcroft et al., 2020 (DOI:10.4414/smw.2020.20336)
 	double mBeta = 26.1;
 	double vBeta = 7;
 	double shift = 25.6;
@@ -87,7 +94,6 @@ NumericVector foi(
 	double scaleBeta = vBeta / mBeta;
   
   	// Infection by infected individuals within the same household
-	// NumericVector last = pmin(lastDate, d + 6);
 	for (int index = 0; index < symptomOnset.size(); ++index) {
 		double k = 0.0;
 
