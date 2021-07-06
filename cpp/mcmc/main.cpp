@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 {
 
     // Arguments passed to main
-    std::string model = argv[1];
+    int numberOfIteration = std::stoi(argv[1]);
     std::string chainID = argv[2];    
     double sdrInfVac = std::stod( argv[3] ); 
     double sdrS = std::stod( argv[4] ); // 0.7; 1; 2
@@ -179,8 +179,12 @@ int main(int argc, char **argv)
         database = "full_database";
     }
 
-    double mainHHSize(2.0);
-    if (argc >= 9) mainHHSize = std::stod( argv[8] ) ; // Main Household size 
+    double mainHHSize; // Main Household size
+    if (database == "full_database") {
+	    mainHHSize = 4.0;
+    } else {
+	    mainHHSize = 3.0;
+    }
 
     //==========Model parameters==========
     // Initial values
@@ -238,7 +242,6 @@ int main(int argc, char **argv)
     size_t seed(20210329);
     int pas = 10;
     int numberOfIteration = 100000;
-    int numberOfIterationTimeInfection = 1;
 
     // Standard deviation of the proposal distributions for the random walk
     std::vector<double> rateForRandomWalk(numberOfParameters);
@@ -276,7 +279,6 @@ int main(int argc, char **argv)
         parameter, 
         selectedParameter, 
         rateForRandomWalk, 
-        numberOfIterationTimeInfection, 
         mainHHSize, 
         sdrInfVac, 
         sdrS
