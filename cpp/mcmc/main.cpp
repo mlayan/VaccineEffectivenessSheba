@@ -198,25 +198,6 @@ int main(int argc, char **argv)
 
     // Parameters to infer according to model
     std::vector<int> selectedParameter(numberOfParameters, 1);
-
-    if (model == "baseline") {
-        selectedParameter[3] = 0;
-        selectedParameter[4] = 0;
-        selectedParameter[5] = 0;
-        selectedParameter[6] = 0;
-        selectedParameter[7] = 0;
-        selectedParameter[8] = 0;
-    }
-    else if (model == "rS") {
-        selectedParameter[8] = 0;
-    } 
-    else if (model == "rInfVac") {
-    	selectedParameter[3] = 0;	
-        selectedParameter[4] = 0;
-        selectedParameter[5] = 0;
-        selectedParameter[6] = 0;
-        selectedParameter[7] = 0;
-    }
     
     // Relative infectivity of asymptomatic cases
     selectedParameter[9] = 0; 
@@ -235,8 +216,6 @@ int main(int argc, char **argv)
     for (auto i = idOfSelectedParameter.begin(); i != idOfSelectedParameter.end(); ++i)
     	std::cout << parameterNames[*i] << ' ';
     cout << endl;
-
-    cout << "Main household size: " << mainHHSize << "\n\n";
 
     //==========MCMC parameters==========
     size_t seed(20210329);
@@ -261,7 +240,7 @@ int main(int argc, char **argv)
     sssdrS << std::fixed << std::setprecision(1) << sdrS;
     ssAsymp << std::fixed << std::setprecision(1) << asymp;
     dataFile=pathData + "2021_05_14_model_data_cpp_" + database + "_" + vaccinationDefinition + strict + ".txt"; 
-    outputFile=pathOutput + "/mcmc_" + database + "_" + model + strict + "_" + vaccinationDefinition + "_" + sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt";
+    outputFile=pathOutput + "/mcmc_" + database + strict + "_" + vaccinationDefinition + "_" + sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt";
 
     // Display names of input file and output file
     cout << "Input file: " << dataFile << endl;
