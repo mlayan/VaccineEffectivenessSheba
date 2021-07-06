@@ -25,7 +25,7 @@ public:
             std::vector<double> rateForRandomWalk,
             double mainHHsize = 2.0,
             double sdLNormInfPrior = 1.0,
-            double sdLNormSPrior = 1.0,
+            double sdLNormSPrior = 1.0
             );
 	~McmcObject() {};
 
