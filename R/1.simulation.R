@@ -175,5 +175,5 @@ expected_dist %>%
   pivot_wider(names_from = nInf, values_from = value) %>%
   arrange(hhsize, desc(distribution)) %>%
   replace(is.na(.), "") %>%
-  write.table(., "results/comparedDistributions_full_database_2doses.csv",
+  write.table(., "tables/comparedDistributions_baseline.csv",
               row.names = F)
