@@ -58,7 +58,7 @@ The output will be written to a space-delimited file in the `results/` folder. I
 
 ### Simulating household epidemics
 
-The script `R/1.simulation.R` allows one to simulate household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in `cpp/simulation`.
+The script `R/1.simulation.R` allows one to simulate 2,000 household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in the `cpp/simulation` directory. Running the script as provided takes about 40 minutes. 
 
 This script depends on two R libraries: 1) tidyverse and 2) Rcpp.
 
