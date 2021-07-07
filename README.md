@@ -28,12 +28,12 @@ The space-separated file `data/2021_05_14_full_database_2doses.txt` contains the
 * the household id 
 * the household size
 * the date of symptom onset for symptomatic cases or the date of detection for asymptomatic cases (1000: not infected) 
-* the infection status (0: not infected, 1: symptomatic, 2: asymptomatic, 3: symptomatic with missing symptom onset)
-* the vaccination status according to the definition of effective vaccination (0: no, 1: yes) 
+* the infection status (0: not infected; 1: symptomatic; 2: asymptomatic; 3: symptomatic with missing symptom onset)
+* the vaccination status according to the definition of effective vaccination (0: no; 1: yes) 
 * the end of the follow-up
-* the age of the individual (0: child under 12 y.o., 1: adult/teenager above 12 y.o.)
-* the index cases (0: index case, 1: household contact)
-* the isolation status (0: no isolation, 1: partial isolation, 2: complete isolation)
+* the age of the individual (0: child under 12 y.o.; 1: adult/teenager above 12 y.o.)
+* the index cases (0: index case; 1: household contact)
+* the isolation status (0: no isolation; 1: partial isolation; 2: complete isolation)
 
 Additional data files were used in the sensitivity analysis (Figure 4 and Supplementary Materials):
 
