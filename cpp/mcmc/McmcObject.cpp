@@ -111,7 +111,6 @@ void McmcObject::initialize_inf_time() {
         }
 
         // Compute person-to-person transmission rate within household
-        int display = 0;
         m_data[house].compute_lambdas();
 
     }
@@ -238,7 +237,7 @@ void McmcObject::update_augmented_data() {
 
             // Update infection time and person-to-person transmission rates
             m_data[house].setInfTime(inf, newValue);
-            m_data[house].update_lambdas(inf, display);   
+            m_data[house].update_lambdas(inf);   
             
             // Compute the new log likelihood
             double newLogLikOfHH = m_data[house].compute_log_lik(m_parameter, m_selectedParam, m_mainHHSize);

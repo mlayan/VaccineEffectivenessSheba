@@ -103,7 +103,6 @@ void runMCMC(McmcObject mcmc,
 
 	int iteration, iter, parID;
 	int numberOfIteration = int(mcmc.iteration() / pas);
-	int nIterTimeInfection = mcmc.getNIterTimeInf();
 
 	// Column names of the output file
 	std::string colNames="iteration logLik ";
@@ -122,8 +121,8 @@ void runMCMC(McmcObject mcmc,
 	output << "0 " << mcmc.globalLogLik() << " "; // Log likelihood
 	for (size_t i = 0; i < mcmc.nParameters(); i++) {
 	    output << mcmc.parameter(i) << " 0 0 ";
-	    output << "0 0" << endl;
 	}
+    output << "0 0" << endl;
 	
 	// Chain
 	for (iteration = 0; iteration < numberOfIteration; iteration++)
@@ -139,9 +138,7 @@ void runMCMC(McmcObject mcmc,
 			}
 
 			// Data augmentation
-			for (int i=0; i < nIterTimeInfection; i++) {
-			    mcmc.update_augmented_data(); // Update log likelihood for all households
-			}
+			mcmc.update_augmented_data(); // Update log likelihood for all households
 		}
 
 		// Write log likelihood, parameter values, number of proposed/accepted move per parameter in the output file
@@ -220,7 +217,6 @@ int main(int argc, char **argv)
     //==========MCMC parameters==========
     size_t seed(20210329);
     int pas = 10;
-    int numberOfIteration = 100000;
 
     // Standard deviation of the proposal distributions for the random walk
     std::vector<double> rateForRandomWalk(numberOfParameters);

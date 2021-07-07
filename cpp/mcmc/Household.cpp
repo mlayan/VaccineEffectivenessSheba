@@ -445,7 +445,7 @@ double Household::newInfTime(int index, std::mt19937_64& gen) {
 
 // Probability density of the incubation period for symptomatic cases and 
 // the time from infection to detection for asymptomatic cases
-double Household::pIncub(int index, double infTime, double maxPCRDetectability) {
+double Household::pIncub(int index, double infTime) {
 
     double out = 0.0;
 
