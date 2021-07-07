@@ -6,9 +6,10 @@
 #######################################################################
 
 rm(list = ls())
-setwd("../../")
-library(tidyverse)
-library(Rcpp)
+setwd("../")
+
+require(tidyverse)
+require(Rcpp)
 
 ####################################################
 ## Prepare environment

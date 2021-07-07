@@ -8,8 +8,8 @@
 rm(list = ls())
 setwd("../")
 
-library(tidyverse)
-library(gridExtra)
+require(tidyverse)
+require(gridExtra)
 
 ############################################
 ## Load outputs

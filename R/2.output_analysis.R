@@ -8,8 +8,8 @@
 rm(list = ls())
 setwd("../")
 
-library(tidyverse)
-library(gridExtra)
+require(tidyverse)
+require(gridExtra)
 
 ####################################################
 ## Load original data
@@ -77,6 +77,7 @@ for (f in list.files("results/", pattern = "^mcmc_full_database_2doses_1.0_1.0_0
 ## Acceptance rates
 ############################################
 mcmc_accept = mcmc_accept %>%
+  filter(!is.na(rate)) %>%
   mutate(parameter = factor(parameter, c(parameterNames, "data")))
 
 ggplot(mcmc_accept, aes(x = parameter, y = rate, col = chain)) +
@@ -85,12 +86,12 @@ geom_jitter() +
   theme_light() +
   theme(axis.text.x = element_text(angle = 25, hjust = 1)) +
   labs(x = "", y = "Acceptance rate")
-ggsave("figures/acceptance_rate_baseline.pdf", height = 5, width = 8)
+ggsave("figures/acceptance_rate_baseline.pdf", height = 4, width = 5)
 
 ############################################
 ## Mixing
 ############################################
-pdf("figures/mixing_baseline.pdf"), width = 18, height = 8)
+pdf("figures/mixing_baseline.pdf", width = 20, height = 8)
 par(mfrow = c(3, length(parameterNames) + 1), mar = c(4,2,3,2))
 for (r in 1:3) {
   plot(
@@ -122,60 +123,75 @@ logNormalPrior = data.frame(d = dlnorm(seq(0, 10, 0.01), 1), x=seq(0, 10, 0.01))
 
 ggplot(mcmc_posterior, aes(x = alpha, color = chain)) +
   geom_density() +
+  labs(x = "Instantaneous risk of infection in the community", y = "Density") +
   theme_light()
-ggsave("figures/alpha_raw.pdf", width = 8, height = 5)
+ggsave("figures/alpha_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior, aes(x = beta, color = chain)) +
   geom_density() +
+  labs(x = "Person-to-person transmission risk", y = "Density") +
   theme_light()
-ggsave("figures/beta_raw.pdf", width = 8, height = 5)
+ggsave("figures/beta_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$delta), ], aes(x = delta, color = chain)) +
   geom_density() +
+  labs(x = "Power coefficient of the frequency-dependent parametrization", y = "Density") +
   theme_light()
-ggsave("figures/delta_raw.pdf", width = 8, height = 5)
+ggsave("figures/delta_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rInfVac), ], aes(x = rInfVac, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rInfVac, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "grey")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rInfVac_raw.pdf", width = 8, height = 5)
+  theme_light() + 
+  labs(x = "Relative infectivity of vaccinated cases", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rInfVac_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rSAV), ], aes(x = rSAV, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rSAV, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "prior")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rSAV_raw.pdf", width = 8, height = 5)
+  theme_light() +
+  labs(x = "Relative susceptibility of vaccinated and not isolated adults", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rSAV_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rSAVI), ], aes(x = rSAVI, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rSAVI, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "prior")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rSAVI_raw.pdf", width = 8, height = 5)
+  theme_light() +
+  labs(x = "Relative susceptibility of vaccinated and isolated adults", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rSAVI_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rSAI), ], aes(x = rSAI, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rSAI, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "prior")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rSAI_raw.pdf", width = 8, height = 5)
+  theme_light() +
+  labs(x = "Relative susceptibility of isolated and not vaccinated adults", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rSAI_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rSC), ], aes(x = rSC, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rSC, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "prior")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rSC_raw.pdf", width = 8, height = 5)
+  theme_light() +
+  labs(x = "Relative susceptibility of not isolated children", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rSC_raw.pdf", width = 5, height = 4)
 
 ggplot(mcmc_posterior[!is.na(mcmc_posterior$rSCI), ], aes(x = rSCI, color = chain)) +
   geom_line(data = logNormalPrior[logNormalPrior$x <= max(mcmc_posterior$rSCI, na.rm = T), ],
-            aes(x = x, y = d), color = "grey") +
+            aes(x = x, y = d, color = "prior")) +
   geom_density() +
-  theme_light()
-ggsave("figures/rSCI_raw.pdf", width = 8, height = 5)
+  theme_light() + 
+  labs(x = "Relative susceptibility of isolated children", y = "Density") +
+  scale_color_manual(values = c("#F8766D", "#00BA38", "#619CFF", "grey"), labels = c("1", "2", "3", "prior"))
+ggsave("figures/rSCI_raw.pdf", width = 5, height = 4)
 
 
 ############################################
@@ -186,12 +202,12 @@ ggsave("figures/rSCI_raw.pdf", width = 8, height = 5)
 mcmc_posterior %>%
   filter(chain == "1") %>%
   summarise(
-    IsolatedVaccinated_LessSusceptibleThan_Vaccinated = sum(rSAVI < rSAV)/n()
+    `Isolated and vaccinated adults/teenagers are less susceptible than vaccinated not isolated adults/teenagers` = sum(rSAVI < rSAV)/n()
             ) %>%
-  pivot_longer(everything(), names_to = "hypothesis", values_to = "p") %>%
+  pivot_longer(everything(), names_to = "hypothesis", values_to = "Probability") %>%
   mutate(
-    BayesFactor = p/(1-p),
-    Evidence = log10(p/(1-p))
+    BayesFactor = Probability/(1-Probability),
+    Evidence = log10(Probability/(1-Probability))
     ) %>%
 write.table(., "tables/isolation_in_vaccinated_contacts.csv", sep=",", row.names = F)
 
@@ -260,7 +276,7 @@ G2 = mcmc_posterior %>%
   labs(y = "", x = "", title = "Relative infectivity")
 
 g = grid.arrange(G1,G2, widths = c(2, 1))
-ggsave("figure/parameter_estimates_baseline.pdf", g, width = 7.5, height = 4)
+ggsave("figures/parameter_estimates_baseline.pdf", g, width = 7.5, height = 4)
 
 
 # Tables 
@@ -364,3 +380,47 @@ pInf %>%
   scale_color_manual(values = c("#5B0E2D", "#FFA781")) +
   labs(y = "Probability of person-to-person transmission", x = "", col = "", title = "")
 ggsave("figures/transmission_risk_baseline.pdf", width = 6.5, height = 4.5)
+
+
+############################################
+## Model adequation
+############################################
+# Household id of households with 1 index case
+hhids_1_index = sapply(unique(bdd$hhid), function(x) sum(bdd$index[bdd$hhid %in% x]))
+hhids_1_index = unique(bdd$hhid)[hhids_1_index == 1]
+
+obsData = bdd %>% 
+  filter(index == 0, hhid %in% hhids_1_index) %>% 
+  group_by(hhsize) %>% 
+  summarise(SAR = sum(infectionStatus > 0) / n()) %>%
+  filter(hhsize < 12) %>%
+  data.frame()
+
+# Expected SAR
+sar_exp = read.csv("results/expectedSAR_full_database_2doses.csv") %>%
+  filter(hhsize < 12) %>%
+  group_by(sim, hhsize) %>%
+  summarise(sar = nInfContacts / nContacts) %>%
+  group_by(hhsize) %>%
+  summarise(
+    median = median(sar), 
+    q025 = quantile(sar, 0.025),
+    q975 = quantile(sar, 0.975)
+  )
+
+ggplot(sar_exp[sar_exp$hhsize <= 5, ]) +
+  geom_pointrange(aes(x = as.factor(hhsize), 
+                      y = median, 
+                      ymin = q025, 
+                      ymax = q975),
+                  col = "#358597") +
+  geom_point(data = obsData[obsData$hhsize <= 5, ], 
+             aes(x = as.factor(hhsize), y = SAR), 
+             col = "black",
+             shape = 15
+  ) +
+  theme_light() +
+  ylim(c(0,1)) +
+  labs(x = "Number of household members", y = "Secondary attack rate", col = "", shape = "")
+ggsave(paste0("figures/model_adequacy.pdf"), height = 3.5, width = 4)
+
