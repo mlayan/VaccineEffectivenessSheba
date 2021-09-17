@@ -8,7 +8,7 @@ HEADERS = Household.h McmcObject.h
 OBJECTS = $(SOURCES:.cpp=.o)
 EXECUTABLE = program.out
 
-covid: $(EXECUTABLE) $(SOURCES) $(HEADERS)
+program: $(EXECUTABLE) $(SOURCES) $(HEADERS)
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(INCLUDES) $(OBJECTS) -o $@
