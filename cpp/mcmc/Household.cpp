@@ -68,12 +68,11 @@ double infectivityProfile(
   // Instantaneous risk of infection
   // The probability density function was estimated by Aschcroft et al., 2020 (DOI:10.4414/smw.2020.20336)
   double out = 0.0;
-  double normCons = 0.0;
+  double normCons = 1 - pgamma(shift - 3);
 
   if (infectionStatus == 1) { // Symptomatic infector with a date of symptom onset
 
     if (origin-3 < studyPeriod && origin-3 < tinf) {
-      normCons = pgamma(shift + (studyPeriod - origin)) - pgamma(shift - 3);
       out = dgamma(shift + (tinf-origin)) / normCons;
     }
    
@@ -81,7 +80,6 @@ double infectivityProfile(
   } else { // Asymptomatic infector and symptomatic infectors with missing symptom onset, they are infectious 2 days after their detection
 
     if ( infectionDate + 2.0 < studyPeriod && infectionDate + 2.0 < tinf) {
-      normCons = pgamma(shift - 3.0 + (studyPeriod - (infectionDate + 2.0)) ) - pgamma(shift - 3.0);
       out = dgamma(shift -3.0 + (tinf - infectionDate - 2.0)) / normCons;
     }
   }
@@ -102,19 +100,17 @@ double cumulativeInfectivity(
   // Cumulative risk of infection
   // The probability density function was estimated by Aschcroft et al., 2020 (DOI: 10.4414/smw.2020.20336)
   double out = 0.0;
-  double normCons = 0.0;
+  double normCons = 1 - pgamma(shift - 3);
 
   if (infectionStatus == 1) { // Symptomatic infector with a date of symptom onset
 
     if (origin-3 < studyPeriod && origin-3 < tinf) { // The last data point for the recipient should be in ]origin-3, +inf[
-      normCons = pgamma(shift + (studyPeriod - origin)) - pgamma(shift - 3.0);
       out = (pgamma(shift+(tinf-origin)) - pgamma(shift - 3.0)) / normCons;
     }
 
   } else { // Asymptomatic infector and symptomatic infectors with missing symptom onset, they are infectious 2 days after their detection
 
     if ( infectionDate + 2.0 < studyPeriod && infectionDate + 2.0 < tinf ){
-      normCons = pgamma(shift - 3.0 + (studyPeriod - (infectionDate + 2.0)) ) - pgamma(shift - 3.0);
       out = pgamma(shift - 3.0 +(tinf - infectionDate - 2.0)) - pgamma(shift - 3.0);
       out /= normCons;
     }
