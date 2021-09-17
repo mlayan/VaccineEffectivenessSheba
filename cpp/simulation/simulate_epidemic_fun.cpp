@@ -100,13 +100,13 @@ NumericVector foi(
 		if (infStatus[index] == 1) { // Symptomatic infector
 			if (t >= symptomOnset[index] - 3) {
 				k += ( R::pgamma(shift + (t + dt - symptomOnset[index]), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - symptomOnset[index]), shapeBeta, scaleBeta, true, false) ) /
-				( R::pgamma(shift + (lastDate - symptomOnset[index]), shapeBeta, scaleBeta, true, false) - R::pgamma(shift - 3, shapeBeta, scaleBeta, true, false) );
+				( 1 - R::pgamma(shift - 3, shapeBeta, scaleBeta, true, false) );
 			} 
 
 		} else if (infStatus[index] == 2){ // Asymptomatic infector 
 			if ( t >= infection[index] + 2 ) {
 				k += ( R::pgamma(shift - 3.0 + (t + dt - infection[index] - 2.0 ), shapeBeta, scaleBeta, true, false) - R::pgamma(shift - 3.0 + (t - infection[index] - 2.0), shapeBeta, scaleBeta, true, false) ) /
-				( R::pgamma(shift - 3.0 + (lastDate - infection[index] - 2.0), shapeBeta, scaleBeta, true, false) - R::pgamma(shift - 3.0, shapeBeta, scaleBeta, true, false) );
+				( 1 - R::pgamma(shift - 3.0, shapeBeta, scaleBeta, true, false) );
 
 				k *= 0.6; // Relative infectivity of asymptomatic cases compared to symptomatic cases
 			}
