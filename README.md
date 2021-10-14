@@ -8,7 +8,7 @@ The full article is available [here]().
 * The boost C++ libraries
 * R
 
-The code has been tested using g++ (7.2.0), Boost (1.72.0), and R (4.0.2) on Linux CentOS 6.10.
+The code has been tested using g++ (8.4.0), Boost (1.72.0), and R (4.0.2) on Linux CentOS 6.10.
 
 ## Compilation
 
