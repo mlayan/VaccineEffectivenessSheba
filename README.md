@@ -40,7 +40,7 @@ Additional data files were used in the sensitivity analysis (Figure 4 and Supple
 * `2021_05_14_full_database_1dose.txt` contains the same households than the principal anlaysis and vaccination is assumed effective 15 days after the 1st dose 
 * `2021_05_14_1PCR_2doses.txt` contains the households where all negative contacts performed at least one PCR test in the 10 days following the detection of the index case
 * `2021_05_14_2PCR_2doses.txt` contains the households where all negative contacts performed at least two PCR tests in the 10 days following the detection of the index case
-* `2021_05_14_full_database_2doses_strict.txt` does not contains the households where the index case was vaccinated but got infected before the vaccine was considered effective (>7 days after the 2nd dose)
+* `2021_05_14_no_early_vaccination_2doses.txt` does not contains the households where the index case was vaccinated but got infected before the vaccine was considered effective (>7 days after the 2nd dose)
 
 ### Launching the analysis
 
