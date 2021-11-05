@@ -44,14 +44,7 @@ Additional data files were used in the sensitivity analysis (Figure 4 and Supple
 
 ### Launching the analysis
 
-Pass the following options as input arguments to `program.out` in your terminal:
-
-* Length of the MCMC chain (100000 in the article)
-* ID of the MCMC chain (1; 2; 3)
-* log-sd of the log-normal prior distribution of the relative infectivity and relative susceptibility parameters (0.7, 1 or 2 in the article)
-* Relative infectivity of asymptomatic cases compared to symptomatic cases (0.6 or 1 in the article)
-* Effective vaccination definition (1dose; 2doses)
-* Database (full_database; 1PCR; 2PCR; strict)
+Use the `launch_mcmc.R` script in the `cpp/mmc/` folder to set up and launch the analyses.
 
 Running the script as provided takes about 20 minutes dependending on the number of participants that is analyzed. 
 The output is written to a space-delimited file in the `results/` folder. Its name contains the arguments passed to the program in the following order: database, vaccination definition, log-sd of the relative infectivity/relative susceptibility prior, relative infectivity of asymptomatic cases and chain id. Each file contains one MCMC chain. 
