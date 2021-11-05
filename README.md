@@ -8,7 +8,7 @@ The full article is available [here]().
 * The boost C++ libraries
 * R
 
-The code has been tested using g++ (8.4.0), Boost (1.72.0), and R (4.0.2) on Linux CentOS 6.10.
+The code has been tested using g++ (8.4.0, 9.2.0), Boost (1.72.0), and R (4.0.2) on Linux CentOS 6.10.
 
 ## Compilation
 
@@ -38,7 +38,8 @@ The space-separated file `data/2021_05_14_full_database_2doses.txt` contains the
 Additional data files were used in the sensitivity analysis (Figure 4 and Supplementary Materials):
 
 * `2021_05_14_full_database_1dose.txt` contains the same households than the principal anlaysis and vaccination is assumed effective 15 days after the 1st dose 
-* `2021_05_14_known_outcome_2doses.txt` contains the households where all contacts performed a PCR test in the 10 days following the detection of the index case
+* `2021_05_14_1PCR_2doses.txt` contains the households where all negative contacts performed at least one PCR test in the 10 days following the detection of the index case
+* `2021_05_14_2PCR_2doses.txt` contains the households where all negative contacts performed at least two PCR tests in the 10 days following the detection of the index case
 * `2021_05_14_full_database_2doses_strict.txt` does not contains the households where the index case was vaccinated but got infected before the vaccine was considered effective (>7 days after the 2nd dose)
 
 ### Launching the analysis
@@ -47,14 +48,13 @@ Pass the following options as input arguments to `program.out` in your terminal:
 
 * Length of the MCMC chain (100000 in the article)
 * ID of the MCMC chain (1; 2; 3)
-* log-sd of the log-normal prior distribution of the relative infectivity parameter (0.7, 1 or 2 in the article)
-* log-sd of the log-normal prior distribution of the relative susceptibility parameters (0.7, 1 or 2 in the article)
+* log-sd of the log-normal prior distribution of the relative infectivity and relative susceptibility parameters (0.7, 1 or 2 in the article)
 * Relative infectivity of asymptomatic cases compared to symptomatic cases (0.6 or 1 in the article)
 * Effective vaccination definition (1dose; 2doses)
-* Database (full_database; know_outcome; strict)
+* Database (full_database; 1PCR; 2PCR; strict)
 
-Running the script as provided takes about 20 minutes.
-The output will be written to a space-delimited file in the `results/` folder. Its name contains the arguments passed to the program in the following order: database,  vaccination definition, log-sd of the relative infectivity prior, log-sd of the relative susceptibility prior, relative infectivity of asymptomatic cases and chain id. Each file contains one MCMC chain. 
+Running the script as provided takes about 20 minutes dependending on the number of participants that is analyzed. 
+The output is written to a space-delimited file in the `results/` folder. Its name contains the arguments passed to the program in the following order: database, vaccination definition, log-sd of the relative infectivity/relative susceptibility prior, relative infectivity of asymptomatic cases and chain id. Each file contains one MCMC chain. 
 
 ### Simulating household epidemics
 
