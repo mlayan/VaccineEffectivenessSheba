@@ -18,13 +18,15 @@ RcppExport NumericVector foi(
 	double lastDate,  
 	NumericVector symptomOnset, 
 	NumericVector infection, 
+	IntegerVector age,
 	IntegerVector vaccinatedInfectors,
 	IntegerVector infStatus, 
 	double beta, 
 	double alpha, 
 	double delta,
-	double rInfVac, 
-	double hhsize,
+    double rInfVac,
+    double rAsymptomatic,
+	int hhsize,
 	double mainHHSize
     );
 

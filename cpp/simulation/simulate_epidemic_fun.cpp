@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 
 double mIncub = 1.63;
-double sdIncub = 0.5;
+double sdIncub = 0.41;
 double maxPCRDetectability = 10.0;
 
 
@@ -15,10 +15,17 @@ double maxPCRDetectability = 10.0;
 // [[Rcpp::export]]
 double incubPeriod() 
   {
-  // Truncated incubation period for symptomatic cases
+  // Incubation period
   double d = rlnorm(1, mIncub, sdIncub)[0];
-  while(d < 3 || d > 30) d = rlnorm(1, mIncub, sdIncub)[0];
+  while(d<3 || d >30) d = rlnorm(1, mIncub, sdIncub)[0];
   return d;
+}
+
+
+//////////////////////////////////////////////
+// [[Rcpp::export]]
+double detectionPeriod() {
+  return runif(1, 0, maxPCRDetectability)[0];
 }
 
 
@@ -26,7 +33,7 @@ double incubPeriod()
 // [[Rcpp::export]]
 double rIncub(double d) 
   {
-  // Truncated incubation period for symptomatic cases
+  // Draw random incubation period for symptomatic cases
   double pIncub = rlnorm(1, mIncub, sdIncub)[0];
   while (pIncub < 3.0 || pIncub > 30.0) {
     pIncub = rlnorm(1, mIncub, sdIncub)[0];  
@@ -38,18 +45,7 @@ double rIncub(double d)
 
 //////////////////////////////////////////////
 // [[Rcpp::export]]
-double detectionPeriod() 
-{
-	// Time period between infection and detection by PCR for asymptomatic cases
-	return runif(1, 0, maxPCRDetectability)[0];
-}
-
-
-//////////////////////////////////////////////
-// [[Rcpp::export]]
-double rInfectionAsymptomatic(double d) 
-{
-	// Time period between infection and detection by PCR for asymptomatic cases
+double rInfectionAsymptomatic(double d) {
 	return runif(1, d-maxPCRDetectability, d)[0];
 }
 
@@ -62,58 +58,66 @@ NumericVector foi(
 	double lastDate,  
 	NumericVector symptomOnset, 
 	NumericVector infection, 
+  IntegerVector age,
 	IntegerVector vaccinatedInfectors,
 	IntegerVector infStatus, 
 	double beta, 
 	double alpha, 
 	double delta,
-	double rInfVac, 
-	double hhsize, 
-	double mainHHSize
-  ) {
-	// Force of infection from 
-	// 	0: community
-	// 	1 to #infected: infected household contacts
-	
-	// Initialize foi vector
-	NumericVector fois(symptomOnset.size() + 1);
-
-	//Infection by the community
-	fois[0] = alpha*dt;
-
-	// Relative infectivity of vaccinated cases at time t
-	IntegerVector allVaccinated = rep(1, vaccinatedInfectors.size());
-	NumericVector relativeInfectivity = ifelse(vaccinatedInfectors == allVaccinated, rInfVac, 1.0);
-
-	// Parameters of the infectivity profile
-	// Shifted gamma distribution from Aschcroft et al., 2020 (DOI:10.4414/smw.2020.20336)
-	double mBeta = 26.1;
-	double vBeta = 7;
-	double shift = 25.6;
-	double shapeBeta = pow(mBeta,2) / vBeta;
-	double scaleBeta = vBeta / mBeta;
+  double rInfVac,
+  double rAsymptomatic,
+	int hhsize, 
+  double mainHHSize
+  ) 
+  {
+  // Force of infection from 
+  // 	0: community
+  // 	1 to #infected: infected household contacts
+  NumericVector fois(symptomOnset.size() + 1);
   
-  	// Infection by infected individuals within the same household
-	for (int index = 0; index < symptomOnset.size(); ++index) {
-		double k = 0.0;
+  //Infection by the community
+  fois[0] = alpha*dt;
+  
+  // Relative infectivity
+  IntegerVector allVaccinated = rep(1, vaccinatedInfectors.size());
+  NumericVector relativeInfectivity = ifelse(vaccinatedInfectors == allVaccinated, rInfVac, 1.0);
+    
+  // Parameters
+  double mBeta = 26.1;
+  double vBeta = 7;
+  double shift = 25.6;
+  double shapeBeta = pow(mBeta,2) / vBeta;
+  double scaleBeta = vBeta / mBeta;
+  double normCons = 1 - R::pgamma(shift - 3, shapeBeta, scaleBeta, true, false);
+  
+  
+  // Infection by infected individuals within the same household
+  if (symptomOnset.size() > 0) {
+    // NumericVector last = pmin(lastDate, d + 6);
+    for (int index = 0; index < symptomOnset.size(); ++index) {
+      double k = 0.0;
 
-		if (infStatus[index] == 1) { // Symptomatic infector
-			if (t >= symptomOnset[index] - 3) {
-				k += ( R::pgamma(shift + (t + dt - symptomOnset[index]), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - symptomOnset[index]), shapeBeta, scaleBeta, true, false) ) /
-				( 1 - R::pgamma(shift - 3, shapeBeta, scaleBeta, true, false) );
-			} 
+      if (infStatus[index] == 1) { // Symptomatic infector
+      	if (t >= symptomOnset[index] - 3 && symptomOnset[index] < lastDate) {
+      		k += ( R::pgamma(shift + (t + dt - symptomOnset[index]), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - symptomOnset[index]), shapeBeta, scaleBeta, true, false) ) / normCons;
 
-		} else if (infStatus[index] == 2){ // Asymptomatic infector 
-			if ( t >= infection[index] + 2 ) {
-				k += ( R::pgamma(shift - 3.0 + (t + dt - infection[index] - 2.0 ), shapeBeta, scaleBeta, true, false) - R::pgamma(shift - 3.0 + (t - infection[index] - 2.0), shapeBeta, scaleBeta, true, false) ) /
-				( 1 - R::pgamma(shift - 3.0, shapeBeta, scaleBeta, true, false) );
+        } else if (t >= symptomOnset[index] - 3 && symptomOnset[index] >= lastDate) {
+          k += ( R::pgamma(shift + (t + dt - lastDate), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - lastDate), shapeBeta, scaleBeta, true, false) ) / normCons;
 
-				k *= 0.6; // Relative infectivity of asymptomatic cases compared to symptomatic cases
-			}
-		} 
+        }
 
-		fois[index + 1] = (beta * k * relativeInfectivity[index]) / pow(hhsize / mainHHSize, delta);
-	} 
+      } else { // Asymptomatic infector 
+      	if ( t >= (infection[index] + 2) && (infection[index] + 2) < lastDate ) { // Asymptomatic cases are infectious 2 days after their infection
+      		k += ( R::pgamma(shift + (t + dt - infection[index] - 3.0), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - infection[index] - 3.0), shapeBeta, scaleBeta, true, false) ) / normCons ;
+
+          k *= rAsymptomatic;
+      	}
+      }
+
+      fois[index + 1] = (beta * k * relativeInfectivity[index]);
+      if (delta != 0.0) fois[index + 1] /= pow(hhsize / mainHHSize, delta);
+    } 
+  }
   
   return fois;
 }
