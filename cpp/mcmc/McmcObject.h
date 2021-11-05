@@ -17,20 +17,23 @@ class McmcObject
 public:
 	McmcObject();
 	McmcObject(
-            size_t seed,
+            unsigned seed,
             int nIterations,
             std::vector<Household> data,
             std::vector<double> parameter,
             std::vector<int> selectedParameter,
             std::vector<double> rateForRandomWalk,
+            int nIterTimeInfection = 1, 
             double mainHHsize = 2.0,
             double sdLNormInfPrior = 1.0,
-            double sdLNormSPrior = 1.0
+            double sdLNormSPrior = 1.0,
+            double maxPCRDetectability = 10.0
             );
 	~McmcObject() {};
 
 	int getNumbHH() const { return m_data.size(); }
 	int iteration() const { return m_iterations; };
+	int getNIterTimeInf() const {return m_iterTimeInfection; };
 	int proposedMove(int index) const {return m_numberOfMoveProposed[index]; };
 	int acceptedMove(int index) const {return m_numberOfMoveAccepted[index]; };
 	int proposedMoveData() const {return m_proposedMoveData; };
@@ -43,6 +46,7 @@ public:
 	size_t nParameters() const { return m_parameter.size(); };
 
 	void resetMoves();
+	void initial_param_values();
 	void initialize_inf_time();
 	void initial_log_lik();
 	void update_parameter(int parID);
@@ -50,6 +54,7 @@ public:
 
 private:
 	int m_iterations;
+	int m_iterTimeInfection;
 	std::mt19937_64 m_gen;
 	double m_globalLogLik;
 	std::vector<double> m_hhLogLik;
@@ -62,6 +67,7 @@ private:
 	std::vector<double> m_rateForRandomWalk;
 	double m_sdLNormInfPrior;
 	double m_sdLNormSPrior;
+	double m_maxPCRDetectability;
 	std::vector<Household> m_data;
 	size_t m_nHH;
 	double m_mainHHSize;
