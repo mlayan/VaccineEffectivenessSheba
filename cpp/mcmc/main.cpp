@@ -275,8 +275,8 @@ int main(int argc, char **argv)
     //Paths
     std::string pathData;
     std::string pathOutput;
-    pathData = "../data/"; // Give path to the data
-    pathOutput = "../results/"; // Give path to the results folder
+    pathData = "../../data/"; // Give path to the data
+    pathOutput = "../../results/"; // Give path to the results folder
 
     //Data file
     std::string dataFile;
