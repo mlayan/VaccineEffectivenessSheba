@@ -29,7 +29,7 @@ The space-separated file `data/2021_05_14_full_database_2doses.txt` contains the
 * the household size
 * the date of symptom onset for symptomatic cases or the date of detection for asymptomatic cases (1000: not infected) 
 * the infection status (0: not infected; 1: symptomatic; 2: asymptomatic; 3: symptomatic with missing symptom onset)
-* the vaccination status according to the definition of effective vaccination (0: no; 1: yes) 
+* the vaccination status according to the definition of effective vaccination (-1: infected in the preceding year; 0: no; 1: yes) 
 * the end of the follow-up
 * the age of the individual (0: child under 12 y.o.; 1: adult/teenager above 12 y.o.)
 * the index cases (0: index case; 1: household contact)
@@ -51,12 +51,16 @@ The output is written to a space-delimited file in the `results/` folder. Its na
 
 ### Simulating household epidemics
 
-The script `R/1.simulation.R` allows one to simulate 2,000 household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in the `cpp/simulation` directory. Running the script as provided takes about 40 minutes. 
+The script `R/3.simulation.R` allows one to simulate 2,000 household epidemics based on the original data `data/2021_05_14_full_database_2doses.txt` and the Rcpp scripts in the `cpp/simulation` directory. Running the script as provided takes about 40 minutes. 
 
 This script depends on two R libraries: 1) tidyverse and 2) Rcpp.
 
+The script `R/4.model_fit.R` allows one to plot the fit of the model that is stored in the `figures/` directory.
+
+This script depends on two R libraries: 1) tidyverse and 2) binom.
+
 ### Visualizing the results
 
-The scripts `R/2.output_analysis.R` and `R/3.sensitivity_analysis.R` allows one to visualize parameter estimates in the baseline scenario and in the sensitivity analysis, respectively. All figures and tables are generated in the `figures/` and `tables/` directories. 
+The scripts `R/1.output_analysis.R` and `R/2.sensitivity_analysis.R` allows one to visualize parameter estimates in the baseline scenario and in the sensitivity analysis, respectively. All figures and tables are generated in the `figures/` and `tables/` directories. 
 
 These scripts depend on two R libraries: 1) tidyverse and 2) gridExtra. 
