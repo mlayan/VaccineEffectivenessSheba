@@ -172,30 +172,24 @@ int main(int argc, char **argv)
 {
 
     // Arguments passed to main
-    std::string model = argv[1];
-    int hhSize = std::stoi(argv[2]);
-    int deltaParameter = std::stoi( argv[3] ); //0: default value to 1; 1: estimated 
-    std::string chainID = argv[4];
+    std::string model = argv[1]; // In the paper, we use the model that estimates the relative infectivity and relative susceptibility parameters, it is rS_rInfVac
+    int hhSize = std::stoi(argv[2]); //0: density-dependent transmission; 1: frequency-dependent transmission (used in the manuscript)
+    int deltaParameter = std::stoi( argv[3] ); //0: default value to 1; 1: estimated (used in the manuscript)
+    std::string chainID = argv[4]; // 1; 2; 3
 
-    double maxPCRDetectability = std::stod( argv[5] ); 
-    if (maxPCRDetectability != 10.0 && maxPCRDetectability != 15.0 ) // Either 10 or 15
-    	throw std::invalid_argument( "MaxPCRDetectability should be 10 or 15" );
+    double maxPCRDetectability = std::stod( argv[5] ); // Maximum period of detectability by PCR for asymptomatic cases, we used 10 days in the manuscript
     
-    double sdrInfVac = std::stod( argv[6] ); 
-    double sdrS = std::stod( argv[7] ); 
-    double asymp = std::stod( argv[8] ); //0.6, 0.95, 1 
+    double sdrInfVac = std::stod( argv[6] ); // log-sd of the relative infectivity of vaccinated cases compared to unvaccinated cases
+    double sdrS = std::stod( argv[7] ); // log-sd of the relative susceptibility parameters 
+    double asymp = std::stod( argv[8] ); //relative infectivity of asymptomatic cases compared to symptomatic cases, we used 0.6 (baseline) and 1 (sensitivity analysis) in the manuscript
 
-    std::string vaccinationDefinition = argv[9]; // 1dose; 2doses
-    std::string database = argv[10]; // name of the data base 
+    std::string vaccinationDefinition = argv[9]; //1dose: effective vaccination if exposure occurs >=15 days after the 1st dose; 2doses: effective vaccination if exposure occurs >= 7 days after 2nd dose
+    std::string database = argv[10]; // full_database; 1PCR; 2PCR; no_early_vaccination: name of the data base 
 
     double mainHHSize(2.0);
-    if (argc >= 12) mainHHSize = std::stod( argv[11] ) ; 
+    if (argc >= 12) mainHHSize = std::stod( argv[11] ) ; // Main household size in the database
 
     std::string fileName, infReduction;
-    if (argc >= 13) {// For simulation studies, name of the input file and % of infectivity reduction of vaccinated cases 
-    	fileName = argv[12]; 
-    	infReduction = argv[13];
-    }
 
     //==========Model parameters==========
     // Initial values
@@ -281,26 +275,20 @@ int main(int argc, char **argv)
     //Paths
     std::string pathData;
     std::string pathOutput;
-    pathData="../../data/";
-    pathOutput="../../results/";
+    pathData = "../data/"; // Give path to the data
+    pathOutput = "../results/"; // Give path to the results folder
 
     //Data file
     std::string dataFile;
     std::string outputFile; 
     // File structure :     	0: indid; 1: hhid; 2: hhsize; 3: onsetTime; 4: case; 5: vaccinated; 6: studyPeriod; 7: age; 8: identified index case; 9: isolation behavior from index case;
-    if (fileName.empty()) {
-    	std::stringstream sssdrInfVac, sssdrS, ssAsymp;
-    	sssdrInfVac << std::fixed << std::setprecision(1) << sdrInfVac;
-    	sssdrS << std::fixed << std::setprecision(1) << sdrS;
-        ssAsymp << std::fixed << std::setprecision(1) << asymp;
-    	dataFile=pathData + "2021_05_14_" + database + "_" + vaccinationDefinition + ".txt";							//Input file 
-		outputFile=pathOutput + vaccinationDefinition + "/mcmc_" + database + "_" + model + "_" + std::to_string(hhSize) + "_" + std::to_string(int(maxPCRDetectability)) + "_" +  
-        sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt"; //Output file
-
-    } else {
-    	dataFile=pathData + vaccinationDefinition + "/simulation_" + infReduction + "/" + fileName;									//Input file 
-		outputFile=pathOutput + vaccinationDefinition + "/simulation_" + infReduction + "/mcmc_" + chainID + "_" + fileName;			//Output file
-    }
+	std::stringstream sssdrInfVac, sssdrS, ssAsymp;
+	sssdrInfVac << std::fixed << std::setprecision(1) << sdrInfVac;
+	sssdrS << std::fixed << std::setprecision(1) << sdrS;
+    ssAsymp << std::fixed << std::setprecision(1) << asymp;
+	dataFile=pathData + "2021_05_14_" + database + "_" + vaccinationDefinition + ".txt";							//Input file 
+	outputFile=pathOutput + vaccinationDefinition + "/mcmc_" + database + "_" + model + "_" + std::to_string(hhSize) + "_" + std::to_string(int(maxPCRDetectability)) + "_" +  
+    sssdrInfVac.str() + "_" + sssdrS.str() + "_" + ssAsymp.str() + "_" + chainID + ".txt"; //Output file
     
     cout << "Input file: " << dataFile << endl;
     cout << "Output file: " << outputFile << "\n\n";

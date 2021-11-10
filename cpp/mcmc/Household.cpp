@@ -217,7 +217,7 @@ void Household::newHousehold() {
 void Household::initialInfTime(int index, double maxPCRDetectability, std::mt19937_64& gen) {
 
     double incubPeriod(0.0);
-
+ 
     if (m_infected[index] == 1) {              // Symptomatic case with known symptom onset 
       incubPeriod = rlnorm(gen, mIncub, sdIncub);
       while (incubPeriod < 3.0 || incubPeriod > 30.0) {
@@ -228,8 +228,8 @@ void Household::initialInfTime(int index, double maxPCRDetectability, std::mt199
     } else if (m_infected[index] > 1 ) {      // Asymptomatic case or symptomatic case with unknown symptom onset
       m_infTime[index] = runif(gen, m_onsetTime[index] - maxPCRDetectability, m_onsetTime[index]);
 
-    } else {		// Covid-free household members or household members with unknown final outcome
-    	m_infTime[index] = 1000.0;
+    } else {    // Covid-free household members or household members with unknown final outcome
+      m_infTime[index] = 1000.0;
     }
 }
 
@@ -286,14 +286,14 @@ void Household::compute_lambdas(int display) {
   for (infector=0; infector<m_size; infector++) {
     for (infectee=0; infectee<m_size; infectee++) {
 
-      if ( m_onsetTime[infectee] == 1000.0 ) {
+      if ( m_onsetTime[infectee] == 1000.0) {
         t1 = m_studyPeriod[infectee];
       }else{
         t1 = m_infTime[infectee];
       }
 
-      // Cumulative transmission rate for household contacts
-      if (m_infTime[infector] != 1000.0 && m_infTime[infector] < t1) {
+      // Cumulative transmission rate for household contacts that were not infected previously 
+      if (m_infTime[infector] != 1000.0 && m_infTime[infector] < t1 && m_vaccinationStatus[infectee] >= 0 ) {
 
         m_cumLambda[infector][infectee] += cumulativeInfectivity(
           m_onsetTime[infector], 
@@ -305,8 +305,8 @@ void Household::compute_lambdas(int display) {
 
       }
 
-      // Instantaneous transmission rate for secondary cases
-      if (m_infTime[infector] != 1000.0 && m_infTime[infectee] != 1000.0 && m_infTime[infector] < t1) {
+      // Instantaneous transmission rate for secondary cases 
+      if (m_infTime[infector] != 1000.0 && m_infTime[infectee] != 1000.0 && m_infTime[infector] < t1 && m_vaccinationStatus[infectee] >= 0 ) {
 
         m_instLambda[infector][infectee] += infectivityProfile(
           m_onsetTime[infector], 
@@ -356,7 +356,7 @@ void Household::update_lambdas(int ind, int display) {
       t1 = m_infTime[infectee];
     }
 
-    if (m_infTime[ind] != 1000.0 && m_infTime[ind] < t1) {
+    if ( m_infTime[ind] != 1000.0 && m_infTime[ind] < t1 && m_vaccinationStatus[infectee] >= 0 ) {
 
       m_cumLambda[ind][infectee] = cumulativeInfectivity(
       m_onsetTime[ind], 
@@ -370,7 +370,7 @@ void Household::update_lambdas(int ind, int display) {
     // Instantaneous transmission rate for secondary cases
     t1 = m_infTime[infectee];
 
-    if (m_onsetTime[infectee] != 1000.0 && m_infTime[ind] != 1000.0 && m_infTime[ind] < t1) {
+    if ( m_onsetTime[infectee] != 1000.0 && m_infTime[ind] != 1000.0 && m_infTime[ind] < t1 && m_vaccinationStatus[infectee] >= 0 ) {
       m_instLambda[ind][infectee] = infectivityProfile(
       m_onsetTime[ind], 
       m_infTime[ind], 
@@ -391,7 +391,7 @@ void Household::update_lambdas(int ind, int display) {
     m_instLambda[infector][ind] = 0;
 
     // Cumulative transmission rate for all household contacts
-    if (m_infTime[infector] != 1000.0 && m_infTime[infector] < t1) {
+    if (m_infTime[infector] != 1000.0 && m_infTime[infector] < t1 && m_vaccinationStatus[ind] >= 0 ) {
 
       m_cumLambda[infector][ind] = cumulativeInfectivity(
       m_onsetTime[infector], 
@@ -403,7 +403,7 @@ void Household::update_lambdas(int ind, int display) {
     }
 
     // Instantaneous transmission rate for secondary cases
-    if (m_onsetTime[ind] != 1000.0 && m_infTime[infector] != 1000.0 && m_infTime[infector] < t1) {
+    if (m_onsetTime[ind] != 1000.0 && m_infTime[infector] != 1000.0 && m_infTime[infector] < t1 && m_vaccinationStatus[ind] >= 0 ) {
       m_instLambda[infector][ind] = infectivityProfile(
       m_onsetTime[infector], 
       m_infTime[infector], 
@@ -501,13 +501,16 @@ double Household::compute_log_lik(
     if ( i == firstCase ) {                                           		// Incubation period of 1st infected
       LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
 
-    } else if ( m_onsetTime[i] != 1000.0 && i != firstCase) {                 // Contribution of the secondary cases
+    } else if ( m_onsetTime[i] != 1000.0 && i != firstCase ) {                 // Contribution of the secondary cases
         LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) );
       	LL += log( pInf(i, t0, parameter, selectedParam, mainHHSize, display) );
       	LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
 
-    } else {																// Non infected individuals
-      LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) ); 
+    } else {																// Non infected individuals over the follow-up period. 
+                                            // Household contacts who were infected in the 3 months prior to the follow-up 
+                                            // Do not contribute to the lieklehood because we assume that they could not get infected
+
+      if ( m_vaccinationStatus[i] >= 0 ) LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) ); 
 
     }
     if (display) cout << "end individual" << endl;
