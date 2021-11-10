@@ -43,6 +43,7 @@ DataFrame hhEpidemic(
   // Susceptible and index cases at the start of the epidemic
   IntegerVector infectors(0);
   IntegerVector sus(0);
+  IntegerVector pastInfections(0);
   double firstInfection = 1000.0;
 
   for (int ind=0; ind<hhsize; ind++) {
@@ -60,12 +61,16 @@ DataFrame hhEpidemic(
       // Corresponds to the start of the in silico follow-up of the household
       firstInfection = min(firstInfection, ddi[ind]); 
 
-    } else { // Susceptibles
-      sus.push_back(ind);
+    } else { 
+      if (vaccinated[ind] >= 0) { // Susceptibles
+       sus.push_back(ind); 
+     } else {                     // Past infections, considered as not susceptible 
+      pastInfections.push_back(ind);
+     }
     }
   }
 
-  // Agent based epidemic within household
+  // Epidemic within household using the inference model
   for (int n = 0; n <= (lastDate-firstInfection)/dt; ++n) {
     
     // Current time
