@@ -1,0 +1,8 @@
+"Contact","Relative susceptibility - median (95% CI)"
+"Isolated+ Vaccinated- Adult","0.16 (0.08-0.29)"
+"Isolated- Vaccinated+ Adult","0.2 (0.08-0.45)"
+"Isolated+ Vaccinated+ Adult","0.08 (0.03-0.19)"
+"Isolated- Child","0.6 (0.36-0.96)"
+"Isolated+ Child","0.22 (0.1-0.42)"
+"Case","Relative infectivity - median (95% CI)"
+"Vaccinated","0.27 (0.06-0.84)"
