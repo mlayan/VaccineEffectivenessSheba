@@ -1,6 +1,6 @@
 # Impact of BNT162b2 vaccination and isolation on SARS-CoV-2 transmission in Israeli households: an observational study
 
-The full article is available [here]().
+The full article is available [here](https://doi.org/10.1093/aje/kwac042).
 
 ## Dependencies
 
