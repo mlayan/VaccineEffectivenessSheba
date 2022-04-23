@@ -108,7 +108,7 @@ NumericVector foi(
 
       } else { // Asymptomatic infector 
       	if ( t >= (infection[index] + 2) && (infection[index] + 2) < lastDate ) { // Asymptomatic cases are infectious 2 days after their infection
-      		k += ( R::pgamma(shift + (t + dt - infection[index] - 3.0), shapeBeta, scaleBeta, true, false) - R::pgamma(shift + (t - infection[index] - 3.0), shapeBeta, scaleBeta, true, false) ) / normCons ;
+      		k += ( R::pgamma(shift - 3.0 + (t + dt - infection[index] - 2.0), shapeBeta, scaleBeta, true, false) - R::pgamma(shift - 3.0 + (t - infection[index] - 2.0), shapeBeta, scaleBeta, true, false) ) / normCons ;
 
           k *= rAsymptomatic;
       	}
