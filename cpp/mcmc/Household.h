@@ -77,8 +77,8 @@ public:
 	double pIncub(int index, double infTime, double maxPCRDetectability);
 
 	double compute_log_lik(std::vector<double> parameters, std::vector<int> selectedParam, double maxPCRDetectability, double mainHHSize, int display = 0);
-	double pInf(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
-	double S(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
+	double log_pInf(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
+	double log_S(int curr, double t0, std::vector<double> parameter, std::vector<int> selectedParam, double mainHHSize, int display = 0);
 
 private:
 	int m_size;

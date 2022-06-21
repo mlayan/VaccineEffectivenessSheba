@@ -286,7 +286,7 @@ void Household::compute_lambdas(int display) {
   for (infector=0; infector<m_size; infector++) {
     for (infectee=0; infectee<m_size; infectee++) {
 
-      if ( m_onsetTime[infectee] == 1000.0) {
+      if ( m_infTime[infectee] == 1000.0) {
         t1 = m_studyPeriod[infectee];
       }else{
         t1 = m_infTime[infectee];
@@ -350,7 +350,7 @@ void Household::update_lambdas(int ind, int display) {
     m_instLambda[ind][infectee] = 0;
 
     // Cumulative transmission rate for all household contacts
-    if ( m_onsetTime[infectee] == 1000.0 ) {
+    if ( m_infTime[infectee] == 1000.0 ) {
       t1 = m_studyPeriod[infectee];
     }else{
       t1 = m_infTime[infectee];
@@ -383,7 +383,12 @@ void Household::update_lambdas(int ind, int display) {
 
 
   // Ind is an infectee
-  t1 = m_infTime[ind];
+  //t1 = m_infTime[ind];
+  if (m_infected[ind] == 0) {
+    t1 = m_studyPeriod[ind];
+  } else {
+    t1 = m_infTime[ind]; 
+  }
 
   for (infector=0; infector<m_size;infector++) {    
     // Reinitialize
@@ -502,15 +507,15 @@ double Household::compute_log_lik(
       LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
 
     } else if ( m_onsetTime[i] != 1000.0 && i != firstCase ) {                 // Contribution of the secondary cases
-        LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) );
-      	LL += log( pInf(i, t0, parameter, selectedParam, mainHHSize, display) );
+        LL += log_S(i, t0, parameter, selectedParam, mainHHSize, display);
+      	LL += log_pInf(i, t0, parameter, selectedParam, mainHHSize, display);
       	LL += log( pIncub(i, m_infTime[i], maxPCRDetectability) );
 
     } else {																// Non infected individuals over the follow-up period. 
                                             // Household contacts who were infected in the 3 months prior to the follow-up 
                                             // Do not contribute to the lieklehood because we assume that they could not get infected
 
-      if ( m_vaccinationStatus[i] >= 0 ) LL += log( S(i, t0, parameter, selectedParam, mainHHSize, display) ); 
+      if ( m_vaccinationStatus[i] >= 0 ) LL += log_S(i, t0, parameter, selectedParam, mainHHSize, display); 
 
     }
     if (display) cout << "end individual" << endl;
@@ -524,7 +529,7 @@ double Household::compute_log_lik(
 
 
 // Probability of infection at t1
-double Household::pInf(
+double Household::log_pInf(
   int curr, 
   double t0, 
   std::vector<double> parameter, 
@@ -572,14 +577,14 @@ double Household::pInf(
     if (selectedParam[2] == 1 && mainHHSize != 2.0) beta /= pow( m_size/mainHHSize, parameter[2]);
 
 
-    return 1-exp( -(alpha + beta) );
+    return log(alpha + beta);
 }
 
 
 
 
 // Survival until from t0 to t1
-double Household::S(
+double Household::log_S(
   int curr, 
   double t0, 
   std::vector<double> parameter, 
@@ -634,6 +639,6 @@ double Household::S(
   if (selectedParam[2] == 1 && mainHHSize == 2.0) beta /= pow(m_size, parameter[2]);
   if (selectedParam[2] == 1 && mainHHSize != 2.0) beta /= pow(m_size / mainHHSize, parameter[2]);
 
-	return exp( -(alpha + beta ) );
+	return -(alpha + beta );
 }
 
