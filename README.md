@@ -64,3 +64,8 @@ This script depends on two R libraries: 1) tidyverse and 2) binom.
 The scripts `R/1.output_analysis.R` and `R/2.sensitivity_analysis.R` allows one to visualize parameter estimates in the baseline scenario and in the sensitivity analysis, respectively. All figures and tables are generated in the `figures/` and `tables/` directories. 
 
 These scripts depend on two R libraries: 1) tidyverse and 2) gridExtra. 
+
+## Erratum
+There was an error in the likelihood of the inference model at line 575 of `Household.cpp` where the probability of infection was written in a discrete way, $1-exp⁡(-λ(t_{infection}))$, 
+while our model is in continuous time and thus the probability of infection is equal to $λ(t_{infection})$. The code has been corrected and all output files available in the repository have been updated. For more details on the impact of this error on the estimates, we refer to the published erratum.
+
